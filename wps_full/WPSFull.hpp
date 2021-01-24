@@ -9,8 +9,8 @@ For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
 */
 
-#ifndef WPSFull_1442534127_hpp
-#define WPSFull_1442534127_hpp
+#ifndef WPSFull_1442533129_hpp
+#define WPSFull_1442533129_hpp
 
 #include <iosfwd>
 
@@ -56,30 +56,94 @@ or consult the RTI Connext manual.
 #define NDDSUSERDllExport __declspec(dllexport)
 #endif
 
-#if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT)
-/* If the code is building on Windows, stop exporting symbols.
-*/
-#undef NDDSUSERDllExport
-#define NDDSUSERDllExport
-#endif
-#include "DDSGeneralForWPS.hpp"
-#if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT)
-/* If the code is building on Windows, start exporting symbols.
-*/
-#undef NDDSUSERDllExport
-#define NDDSUSERDllExport __declspec(dllexport)
-#endif
 namespace WorldPerceptionModel {
 
     static const int32_t MAX_POINTS_IN_REGION_OF_INTEREST = 10;
 
+    class NDDSUSERDllExport WPS_TDPoint {
+      public:
+        WPS_TDPoint();
+
+        WPS_TDPoint(
+            double x,
+            double y,
+            double z);
+
+        #ifdef RTI_CXX11_RVALUE_REFERENCES
+        #ifndef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
+        WPS_TDPoint (WPS_TDPoint&&) = default;
+        WPS_TDPoint& operator=(WPS_TDPoint&&) = default;
+        WPS_TDPoint& operator=(const WPS_TDPoint&) = default;
+        WPS_TDPoint(const WPS_TDPoint&) = default;
+        #else
+        WPS_TDPoint(WPS_TDPoint&& other_) OMG_NOEXCEPT;  
+        WPS_TDPoint& operator=(WPS_TDPoint&&  other_) OMG_NOEXCEPT;
+        #endif
+        #endif 
+
+        double& x() OMG_NOEXCEPT {
+            return m_x_;
+        }
+
+        const double& x() const OMG_NOEXCEPT {
+            return m_x_;
+        }
+
+        void x(double value) {
+            m_x_ = value;
+        }
+
+        double& y() OMG_NOEXCEPT {
+            return m_y_;
+        }
+
+        const double& y() const OMG_NOEXCEPT {
+            return m_y_;
+        }
+
+        void y(double value) {
+            m_y_ = value;
+        }
+
+        double& z() OMG_NOEXCEPT {
+            return m_z_;
+        }
+
+        const double& z() const OMG_NOEXCEPT {
+            return m_z_;
+        }
+
+        void z(double value) {
+            m_z_ = value;
+        }
+
+        bool operator == (const WPS_TDPoint& other_) const;
+        bool operator != (const WPS_TDPoint& other_) const;
+
+        void swap(WPS_TDPoint& other_) OMG_NOEXCEPT ;
+
+      private:
+
+        double m_x_;
+        double m_y_;
+        double m_z_;
+
+    };
+
+    inline void swap(WPS_TDPoint& a, WPS_TDPoint& b)  OMG_NOEXCEPT 
+    {
+        a.swap(b);
+    }
+
+    NDDSUSERDllExport std::ostream& operator<<(std::ostream& o, const WPS_TDPoint& sample);
+
     #if (defined(RTI_WIN32) || defined (RTI_WINCE)) && defined(NDDS_USER_DLL_EXPORT)
     // On Windows, dll-export template instantiations of standard types used by
     // other dll-exported types
-    template class NDDSUSERDllExport std::allocator< DDS_GRI::DDSCommon::DDS_GeoPoint >;
-    template class NDDSUSERDllExport std::vector< DDS_GRI::DDSCommon::DDS_GeoPoint >;
+    template class NDDSUSERDllExport std::allocator< WorldPerceptionModel::WPS_TDPoint >;
+    template class NDDSUSERDllExport std::vector< WorldPerceptionModel::WPS_TDPoint >;
     #endif
-    typedef ::rti::core::bounded_sequence< DDS_GRI::DDSCommon::DDS_GeoPoint, (WorldPerceptionModel::MAX_POINTS_IN_REGION_OF_INTEREST) > RegionOfInterest_type;
+    typedef ::rti::core::bounded_sequence< WorldPerceptionModel::WPS_TDPoint, (WorldPerceptionModel::MAX_POINTS_IN_REGION_OF_INTEREST) > RegionOfInterest_type;
     struct RegionOfInterest_type_AliasTag_t {};
     namespace WPS_BuildModel {
 
@@ -225,9 +289,7 @@ namespace WorldPerceptionModel {
             WPS_BuildModelMessage();
 
             WPS_BuildModelMessage(
-                const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-                const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
-                const std::string& RequestId,
+                int32_t RequestId,
                 const WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelData& Data);
 
             #ifdef RTI_CXX11_RVALUE_REFERENCES
@@ -242,39 +304,15 @@ namespace WorldPerceptionModel {
             #endif
             #endif 
 
-            DDS_GRI::DDSCommon::DDS_Identifier& SourceId() OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId() const OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            void SourceId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_SourceId_ = value;
-            }
-
-            DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() const OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            void DestinationId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_DestinationId_ = value;
-            }
-
-            std::string& RequestId() OMG_NOEXCEPT {
+            int32_t& RequestId() OMG_NOEXCEPT {
                 return m_RequestId_;
             }
 
-            const std::string& RequestId() const OMG_NOEXCEPT {
+            const int32_t& RequestId() const OMG_NOEXCEPT {
                 return m_RequestId_;
             }
 
-            void RequestId(const std::string& value) {
+            void RequestId(int32_t value) {
                 m_RequestId_ = value;
             }
 
@@ -297,9 +335,7 @@ namespace WorldPerceptionModel {
 
           private:
 
-            DDS_GRI::DDSCommon::DDS_Identifier m_SourceId_;
-            DDS_GRI::DDSCommon::DDS_Identifier m_DestinationId_;
-            std::string m_RequestId_;
+            int32_t m_RequestId_;
             WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelData m_Data_;
 
         };
@@ -316,7 +352,8 @@ namespace WorldPerceptionModel {
                 Idle,      
                 InProgess,      
                 Aborted,      
-                Completed     
+                Completed,      
+                Failure     
             };
             static type get_default(){ return Idle;}
         };
@@ -329,8 +366,7 @@ namespace WorldPerceptionModel {
             WPS_BuildModelReportMessage();
 
             WPS_BuildModelReportMessage(
-                const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-                const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
+                int32_t RequestId,
                 const WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum& BuildModelStatus,
                 int32_t ModelQuality);
 
@@ -346,28 +382,16 @@ namespace WorldPerceptionModel {
             #endif
             #endif 
 
-            DDS_GRI::DDSCommon::DDS_Identifier& SourceId() OMG_NOEXCEPT {
-                return m_SourceId_;
+            int32_t& RequestId() OMG_NOEXCEPT {
+                return m_RequestId_;
             }
 
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId() const OMG_NOEXCEPT {
-                return m_SourceId_;
+            const int32_t& RequestId() const OMG_NOEXCEPT {
+                return m_RequestId_;
             }
 
-            void SourceId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_SourceId_ = value;
-            }
-
-            DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() const OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            void DestinationId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_DestinationId_ = value;
+            void RequestId(int32_t value) {
+                m_RequestId_ = value;
             }
 
             WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum& BuildModelStatus() OMG_NOEXCEPT {
@@ -401,8 +425,7 @@ namespace WorldPerceptionModel {
 
           private:
 
-            DDS_GRI::DDSCommon::DDS_Identifier m_SourceId_;
-            DDS_GRI::DDSCommon::DDS_Identifier m_DestinationId_;
+            int32_t m_RequestId_;
             WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum m_BuildModelStatus_;
             int32_t m_ModelQuality_;
 
@@ -560,9 +583,7 @@ namespace WorldPerceptionModel {
             WPS_DroneLocalizationMessage();
 
             WPS_DroneLocalizationMessage(
-                const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-                const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
-                const std::string& RequestId,
+                int32_t RequestId,
                 const WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationData& Data);
 
             #ifdef RTI_CXX11_RVALUE_REFERENCES
@@ -577,39 +598,15 @@ namespace WorldPerceptionModel {
             #endif
             #endif 
 
-            DDS_GRI::DDSCommon::DDS_Identifier& SourceId() OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId() const OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            void SourceId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_SourceId_ = value;
-            }
-
-            DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() const OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            void DestinationId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_DestinationId_ = value;
-            }
-
-            std::string& RequestId() OMG_NOEXCEPT {
+            int32_t& RequestId() OMG_NOEXCEPT {
                 return m_RequestId_;
             }
 
-            const std::string& RequestId() const OMG_NOEXCEPT {
+            const int32_t& RequestId() const OMG_NOEXCEPT {
                 return m_RequestId_;
             }
 
-            void RequestId(const std::string& value) {
+            void RequestId(int32_t value) {
                 m_RequestId_ = value;
             }
 
@@ -632,9 +629,7 @@ namespace WorldPerceptionModel {
 
           private:
 
-            DDS_GRI::DDSCommon::DDS_Identifier m_SourceId_;
-            DDS_GRI::DDSCommon::DDS_Identifier m_DestinationId_;
-            std::string m_RequestId_;
+            int32_t m_RequestId_;
             WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationData m_Data_;
 
         };
@@ -662,8 +657,6 @@ namespace WorldPerceptionModel {
             WPS_DroneLocalizationReportMessage();
 
             WPS_DroneLocalizationReportMessage(
-                const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-                const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
                 const WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationStatusEnum& DroneLocalizationStatus,
                 bool docked);
 
@@ -678,30 +671,6 @@ namespace WorldPerceptionModel {
             WPS_DroneLocalizationReportMessage& operator=(WPS_DroneLocalizationReportMessage&&  other_) OMG_NOEXCEPT;
             #endif
             #endif 
-
-            DDS_GRI::DDSCommon::DDS_Identifier& SourceId() OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId() const OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            void SourceId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_SourceId_ = value;
-            }
-
-            DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() const OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            void DestinationId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_DestinationId_ = value;
-            }
 
             WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationStatusEnum& DroneLocalizationStatus() OMG_NOEXCEPT {
                 return m_DroneLocalizationStatus_;
@@ -734,8 +703,6 @@ namespace WorldPerceptionModel {
 
           private:
 
-            DDS_GRI::DDSCommon::DDS_Identifier m_SourceId_;
-            DDS_GRI::DDSCommon::DDS_Identifier m_DestinationId_;
             WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationStatusEnum m_DroneLocalizationStatus_;
             bool m_docked_;
 
@@ -753,13 +720,7 @@ namespace WorldPerceptionModel {
 
         static const int32_t MAX_LINKED_FRAMES = 10;
 
-        #if (defined(RTI_WIN32) || defined (RTI_WINCE)) && defined(NDDS_USER_DLL_EXPORT)
-        // On Windows, dll-export template instantiations of standard types used by
-        // other dll-exported types
-        template class NDDSUSERDllExport std::allocator< ::rti::core::int64 >;
-        template class NDDSUSERDllExport std::vector< ::rti::core::int64 >;
-        #endif
-        typedef ::rti::core::bounded_sequence< ::rti::core::int64, (WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::MAX_LINKED_FRAMES) > RelevantLinkedFrames_type;
+        typedef ::rti::core::bounded_sequence< WorldPerceptionModel::WPS_TDPoint, (WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::MAX_LINKED_FRAMES) > RelevantLinkedFrames_type;
         struct RelevantLinkedFrames_type_AliasTag_t {};
 
         class NDDSUSERDllExport WPS_PositionOrientation {
@@ -1024,9 +985,7 @@ namespace WorldPerceptionModel {
             WPS_UTMVehicleLocalizationMessage();
 
             WPS_UTMVehicleLocalizationMessage(
-                const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-                const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
-                const std::string& RequestId,
+                int32_t RequestId,
                 const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationData& Data);
 
             #ifdef RTI_CXX11_RVALUE_REFERENCES
@@ -1041,39 +1000,15 @@ namespace WorldPerceptionModel {
             #endif
             #endif 
 
-            DDS_GRI::DDSCommon::DDS_Identifier& SourceId() OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId() const OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            void SourceId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_SourceId_ = value;
-            }
-
-            DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() const OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            void DestinationId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_DestinationId_ = value;
-            }
-
-            std::string& RequestId() OMG_NOEXCEPT {
+            int32_t& RequestId() OMG_NOEXCEPT {
                 return m_RequestId_;
             }
 
-            const std::string& RequestId() const OMG_NOEXCEPT {
+            const int32_t& RequestId() const OMG_NOEXCEPT {
                 return m_RequestId_;
             }
 
-            void RequestId(const std::string& value) {
+            void RequestId(int32_t value) {
                 m_RequestId_ = value;
             }
 
@@ -1096,9 +1031,7 @@ namespace WorldPerceptionModel {
 
           private:
 
-            DDS_GRI::DDSCommon::DDS_Identifier m_SourceId_;
-            DDS_GRI::DDSCommon::DDS_Identifier m_DestinationId_;
-            std::string m_RequestId_;
+            int32_t m_RequestId_;
             WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationData m_Data_;
 
         };
@@ -1126,9 +1059,9 @@ namespace WorldPerceptionModel {
             WPS_UTMVehicleLocalizationReportData();
 
             WPS_UTMVehicleLocalizationReportData(
-                const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& DroneLocalizationStatus,
+                const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& UTMVehicleLocalizationStatus,
                 bool docked,
-                const DDS_GRI::DDSCommon::DDS_GeoPoint& UTMCenterFrame,
+                const WorldPerceptionModel::WPS_TDPoint& UTMCenterFrame,
                 const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation& VehiclePosOrient,
                 const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::RelevantLinkedFrames_type& RelevantFrames);
 
@@ -1144,16 +1077,16 @@ namespace WorldPerceptionModel {
             #endif
             #endif 
 
-            WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& DroneLocalizationStatus() OMG_NOEXCEPT {
-                return m_DroneLocalizationStatus_;
+            WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& UTMVehicleLocalizationStatus() OMG_NOEXCEPT {
+                return m_UTMVehicleLocalizationStatus_;
             }
 
-            const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& DroneLocalizationStatus() const OMG_NOEXCEPT {
-                return m_DroneLocalizationStatus_;
+            const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& UTMVehicleLocalizationStatus() const OMG_NOEXCEPT {
+                return m_UTMVehicleLocalizationStatus_;
             }
 
-            void DroneLocalizationStatus(const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& value) {
-                m_DroneLocalizationStatus_ = value;
+            void UTMVehicleLocalizationStatus(const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& value) {
+                m_UTMVehicleLocalizationStatus_ = value;
             }
 
             bool& docked() OMG_NOEXCEPT {
@@ -1168,15 +1101,15 @@ namespace WorldPerceptionModel {
                 m_docked_ = value;
             }
 
-            DDS_GRI::DDSCommon::DDS_GeoPoint& UTMCenterFrame() OMG_NOEXCEPT {
+            WorldPerceptionModel::WPS_TDPoint& UTMCenterFrame() OMG_NOEXCEPT {
                 return m_UTMCenterFrame_;
             }
 
-            const DDS_GRI::DDSCommon::DDS_GeoPoint& UTMCenterFrame() const OMG_NOEXCEPT {
+            const WorldPerceptionModel::WPS_TDPoint& UTMCenterFrame() const OMG_NOEXCEPT {
                 return m_UTMCenterFrame_;
             }
 
-            void UTMCenterFrame(const DDS_GRI::DDSCommon::DDS_GeoPoint& value) {
+            void UTMCenterFrame(const WorldPerceptionModel::WPS_TDPoint& value) {
                 m_UTMCenterFrame_ = value;
             }
 
@@ -1211,9 +1144,9 @@ namespace WorldPerceptionModel {
 
           private:
 
-            WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum m_DroneLocalizationStatus_;
+            WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum m_UTMVehicleLocalizationStatus_;
             bool m_docked_;
-            DDS_GRI::DDSCommon::DDS_GeoPoint m_UTMCenterFrame_;
+            WorldPerceptionModel::WPS_TDPoint m_UTMCenterFrame_;
             WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation m_VehiclePosOrient_;
             WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::RelevantLinkedFrames_type m_RelevantFrames_;
 
@@ -1231,8 +1164,7 @@ namespace WorldPerceptionModel {
             WPS_UTMVehicleLocalizationReportMessage();
 
             WPS_UTMVehicleLocalizationReportMessage(
-                const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-                const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
+                int32_t RequestId,
                 const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportData& Data);
 
             #ifdef RTI_CXX11_RVALUE_REFERENCES
@@ -1247,28 +1179,16 @@ namespace WorldPerceptionModel {
             #endif
             #endif 
 
-            DDS_GRI::DDSCommon::DDS_Identifier& SourceId() OMG_NOEXCEPT {
-                return m_SourceId_;
+            int32_t& RequestId() OMG_NOEXCEPT {
+                return m_RequestId_;
             }
 
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId() const OMG_NOEXCEPT {
-                return m_SourceId_;
+            const int32_t& RequestId() const OMG_NOEXCEPT {
+                return m_RequestId_;
             }
 
-            void SourceId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_SourceId_ = value;
-            }
-
-            DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() const OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            void DestinationId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_DestinationId_ = value;
+            void RequestId(int32_t value) {
+                m_RequestId_ = value;
             }
 
             WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportData& Data() OMG_NOEXCEPT {
@@ -1290,8 +1210,7 @@ namespace WorldPerceptionModel {
 
           private:
 
-            DDS_GRI::DDSCommon::DDS_Identifier m_SourceId_;
-            DDS_GRI::DDSCommon::DDS_Identifier m_DestinationId_;
+            int32_t m_RequestId_;
             WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportData m_Data_;
 
         };
@@ -1462,9 +1381,7 @@ namespace WorldPerceptionModel {
             WPS_ModelDifferencesMessage();
 
             WPS_ModelDifferencesMessage(
-                const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-                const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
-                const std::string& RequestId,
+                int32_t RequestId,
                 const WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesData& Data);
 
             #ifdef RTI_CXX11_RVALUE_REFERENCES
@@ -1479,39 +1396,15 @@ namespace WorldPerceptionModel {
             #endif
             #endif 
 
-            DDS_GRI::DDSCommon::DDS_Identifier& SourceId() OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId() const OMG_NOEXCEPT {
-                return m_SourceId_;
-            }
-
-            void SourceId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_SourceId_ = value;
-            }
-
-            DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() const OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            void DestinationId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_DestinationId_ = value;
-            }
-
-            std::string& RequestId() OMG_NOEXCEPT {
+            int32_t& RequestId() OMG_NOEXCEPT {
                 return m_RequestId_;
             }
 
-            const std::string& RequestId() const OMG_NOEXCEPT {
+            const int32_t& RequestId() const OMG_NOEXCEPT {
                 return m_RequestId_;
             }
 
-            void RequestId(const std::string& value) {
+            void RequestId(int32_t value) {
                 m_RequestId_ = value;
             }
 
@@ -1534,9 +1427,7 @@ namespace WorldPerceptionModel {
 
           private:
 
-            DDS_GRI::DDSCommon::DDS_Identifier m_SourceId_;
-            DDS_GRI::DDSCommon::DDS_Identifier m_DestinationId_;
-            std::string m_RequestId_;
+            int32_t m_RequestId_;
             WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesData m_Data_;
 
         };
@@ -1566,8 +1457,7 @@ namespace WorldPerceptionModel {
             WPS_ModelDifferencesReportMessage();
 
             WPS_ModelDifferencesReportMessage(
-                const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-                const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
+                int32_t RequestId,
                 const WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesStatusEnum& ModelDifferencesStatus);
 
             #ifdef RTI_CXX11_RVALUE_REFERENCES
@@ -1582,28 +1472,16 @@ namespace WorldPerceptionModel {
             #endif
             #endif 
 
-            DDS_GRI::DDSCommon::DDS_Identifier& SourceId() OMG_NOEXCEPT {
-                return m_SourceId_;
+            int32_t& RequestId() OMG_NOEXCEPT {
+                return m_RequestId_;
             }
 
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId() const OMG_NOEXCEPT {
-                return m_SourceId_;
+            const int32_t& RequestId() const OMG_NOEXCEPT {
+                return m_RequestId_;
             }
 
-            void SourceId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_SourceId_ = value;
-            }
-
-            DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId() const OMG_NOEXCEPT {
-                return m_DestinationId_;
-            }
-
-            void DestinationId(const DDS_GRI::DDSCommon::DDS_Identifier& value) {
-                m_DestinationId_ = value;
+            void RequestId(int32_t value) {
+                m_RequestId_ = value;
             }
 
             WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesStatusEnum& ModelDifferencesStatus() OMG_NOEXCEPT {
@@ -1625,8 +1503,7 @@ namespace WorldPerceptionModel {
 
           private:
 
-            DDS_GRI::DDSCommon::DDS_Identifier m_SourceId_;
-            DDS_GRI::DDSCommon::DDS_Identifier m_DestinationId_;
+            int32_t m_RequestId_;
             WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesStatusEnum m_ModelDifferencesStatus_;
 
         };
@@ -1649,6 +1526,25 @@ namespace rti {
 }
 namespace dds {
     namespace topic {
+
+        template<>
+        struct topic_type_name< WorldPerceptionModel::WPS_TDPoint > {
+            NDDSUSERDllExport static std::string value() {
+                return "WorldPerceptionModel::WPS_TDPoint";
+            }
+        };
+
+        template<>
+        struct topic_type_support< WorldPerceptionModel::WPS_TDPoint > {
+            NDDSUSERDllExport 
+            static void reset_sample(WorldPerceptionModel::WPS_TDPoint& sample);
+
+            NDDSUSERDllExport 
+            static void allocate_sample(WorldPerceptionModel::WPS_TDPoint& sample, int, int);
+
+            static const ::rti::topic::TypePluginKind::type type_plugin_kind = 
+            ::rti::topic::TypePluginKind::STL;
+        };
 
         template<>
         struct topic_type_name< WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelParameters > {
@@ -1878,24 +1774,7 @@ namespace dds {
         };
 
         template<>
-        struct is_topic_type< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation > : public ::dds::core::true_type {};
-
-        template<>
         struct topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation > {
-            NDDSUSERDllExport 
-            static void register_type(
-                ::dds::domain::DomainParticipant& participant,
-                const std::string & type_name);
-
-            NDDSUSERDllExport 
-            static std::vector<char>& to_cdr_buffer(
-                std::vector<char>& buffer, 
-                const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation& sample,
-                ::dds::core::policy::DataRepresentationId representation 
-                = ::dds::core::policy::DataRepresentation::auto_id());
-
-            NDDSUSERDllExport 
-            static void from_cdr_buffer(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation& sample, const std::vector<char>& buffer);
             NDDSUSERDllExport 
             static void reset_sample(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation& sample);
 
@@ -2150,6 +2029,20 @@ namespace dds {
 
 namespace rti { 
     namespace topic {
+
+        #ifndef NDDS_STANDALONE_TYPE
+        template<>
+        struct dynamic_type< WorldPerceptionModel::WPS_TDPoint > {
+            typedef ::dds::core::xtypes::StructType type;
+            NDDSUSERDllExport static const ::dds::core::xtypes::StructType& get();
+        };
+        #endif
+
+        template <>
+        struct extensibility< WorldPerceptionModel::WPS_TDPoint > {
+            static const ::dds::core::xtypes::ExtensibilityKind::type kind =
+            ::dds::core::xtypes::ExtensibilityKind::EXTENSIBLE;                
+        };
 
         #ifndef NDDS_STANDALONE_TYPE
         template<>
@@ -2541,5 +2434,5 @@ namespace rti {
 #define NDDSUSERDllExport
 #endif
 
-#endif // WPSFull_1442534127_hpp
+#endif // WPSFull_1442533129_hpp
 

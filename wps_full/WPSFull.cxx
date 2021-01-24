@@ -21,6 +21,77 @@ or consult the RTI Connext manual.
 
 namespace WorldPerceptionModel {
 
+    // ---- WPS_TDPoint: 
+
+    WPS_TDPoint::WPS_TDPoint() :
+        m_x_ (0.0) ,
+        m_y_ (0.0) ,
+        m_z_ (0.0)  {
+    }   
+
+    WPS_TDPoint::WPS_TDPoint (
+        double x,
+        double y,
+        double z)
+        :
+            m_x_( x ),
+            m_y_( y ),
+            m_z_( z ) {
+    }
+
+    #ifdef RTI_CXX11_RVALUE_REFERENCES
+    #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
+    WPS_TDPoint::WPS_TDPoint(WPS_TDPoint&& other_) OMG_NOEXCEPT  :m_x_ (std::move(other_.m_x_))
+    ,
+    m_y_ (std::move(other_.m_y_))
+    ,
+    m_z_ (std::move(other_.m_z_))
+    {
+    } 
+
+    WPS_TDPoint& WPS_TDPoint::operator=(WPS_TDPoint&&  other_) OMG_NOEXCEPT {
+        WPS_TDPoint tmp(std::move(other_));
+        swap(tmp); 
+        return *this;
+    }
+    #endif
+    #endif   
+
+    void WPS_TDPoint::swap(WPS_TDPoint& other_)  OMG_NOEXCEPT 
+    {
+        using std::swap;
+        swap(m_x_, other_.m_x_);
+        swap(m_y_, other_.m_y_);
+        swap(m_z_, other_.m_z_);
+    }  
+
+    bool WPS_TDPoint::operator == (const WPS_TDPoint& other_) const {
+        if (m_x_ != other_.m_x_) {
+            return false;
+        }
+        if (m_y_ != other_.m_y_) {
+            return false;
+        }
+        if (m_z_ != other_.m_z_) {
+            return false;
+        }
+        return true;
+    }
+    bool WPS_TDPoint::operator != (const WPS_TDPoint& other_) const {
+        return !this->operator ==(other_);
+    }
+
+    std::ostream& operator << (std::ostream& o,const WPS_TDPoint& sample)
+    {
+        ::rti::util::StreamFlagSaver flag_saver (o);
+        o <<"[";
+        o << "x: " << std::setprecision(15) <<sample.x()<<", ";
+        o << "y: " << std::setprecision(15) <<sample.y()<<", ";
+        o << "z: " << std::setprecision(15) <<sample.z() ;
+        o <<"]";
+        return o;
+    }
+
     namespace WPS_BuildModel {
 
         // ---- WPS_BuildModelParameters: 
@@ -160,28 +231,20 @@ namespace WorldPerceptionModel {
         // ---- WPS_BuildModelMessage: 
 
         WPS_BuildModelMessage::WPS_BuildModelMessage() :
-            m_RequestId_ ("")  {
+            m_RequestId_ (0)  {
         }   
 
         WPS_BuildModelMessage::WPS_BuildModelMessage (
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
-            const std::string& RequestId,
+            int32_t RequestId,
             const WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelData& Data)
             :
-                m_SourceId_( SourceId ),
-                m_DestinationId_( DestinationId ),
                 m_RequestId_( RequestId ),
                 m_Data_( Data ) {
         }
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_BuildModelMessage::WPS_BuildModelMessage(WPS_BuildModelMessage&& other_) OMG_NOEXCEPT  :m_SourceId_ (std::move(other_.m_SourceId_))
-        ,
-        m_DestinationId_ (std::move(other_.m_DestinationId_))
-        ,
-        m_RequestId_ (std::move(other_.m_RequestId_))
+        WPS_BuildModelMessage::WPS_BuildModelMessage(WPS_BuildModelMessage&& other_) OMG_NOEXCEPT  :m_RequestId_ (std::move(other_.m_RequestId_))
         ,
         m_Data_ (std::move(other_.m_Data_))
         {
@@ -198,19 +261,11 @@ namespace WorldPerceptionModel {
         void WPS_BuildModelMessage::swap(WPS_BuildModelMessage& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_SourceId_, other_.m_SourceId_);
-            swap(m_DestinationId_, other_.m_DestinationId_);
             swap(m_RequestId_, other_.m_RequestId_);
             swap(m_Data_, other_.m_Data_);
         }  
 
         bool WPS_BuildModelMessage::operator == (const WPS_BuildModelMessage& other_) const {
-            if (m_SourceId_ != other_.m_SourceId_) {
-                return false;
-            }
-            if (m_DestinationId_ != other_.m_DestinationId_) {
-                return false;
-            }
             if (m_RequestId_ != other_.m_RequestId_) {
                 return false;
             }
@@ -227,8 +282,6 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "SourceId: " << sample.SourceId()<<", ";
-            o << "DestinationId: " << sample.DestinationId()<<", ";
             o << "RequestId: " << sample.RequestId()<<", ";
             o << "Data: " << sample.Data() ;
             o <<"]";
@@ -251,6 +304,9 @@ namespace WorldPerceptionModel {
                 case WPS_BuildModelStatusEnum::Completed:
                 o << "WPS_BuildModelStatusEnum::Completed" << " ";
                 break;
+                case WPS_BuildModelStatusEnum::Failure:
+                o << "WPS_BuildModelStatusEnum::Failure" << " ";
+                break;
             }
             return o;
         }
@@ -258,27 +314,24 @@ namespace WorldPerceptionModel {
         // ---- WPS_BuildModelReportMessage: 
 
         WPS_BuildModelReportMessage::WPS_BuildModelReportMessage() :
+            m_RequestId_ (0) ,
             m_BuildModelStatus_(WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum::Idle) ,
             m_ModelQuality_ (0)  {
         }   
 
         WPS_BuildModelReportMessage::WPS_BuildModelReportMessage (
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
+            int32_t RequestId,
             const WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum& BuildModelStatus,
             int32_t ModelQuality)
             :
-                m_SourceId_( SourceId ),
-                m_DestinationId_( DestinationId ),
+                m_RequestId_( RequestId ),
                 m_BuildModelStatus_( BuildModelStatus ),
                 m_ModelQuality_( ModelQuality ) {
         }
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_BuildModelReportMessage::WPS_BuildModelReportMessage(WPS_BuildModelReportMessage&& other_) OMG_NOEXCEPT  :m_SourceId_ (std::move(other_.m_SourceId_))
-        ,
-        m_DestinationId_ (std::move(other_.m_DestinationId_))
+        WPS_BuildModelReportMessage::WPS_BuildModelReportMessage(WPS_BuildModelReportMessage&& other_) OMG_NOEXCEPT  :m_RequestId_ (std::move(other_.m_RequestId_))
         ,
         m_BuildModelStatus_ (std::move(other_.m_BuildModelStatus_))
         ,
@@ -297,17 +350,13 @@ namespace WorldPerceptionModel {
         void WPS_BuildModelReportMessage::swap(WPS_BuildModelReportMessage& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_SourceId_, other_.m_SourceId_);
-            swap(m_DestinationId_, other_.m_DestinationId_);
+            swap(m_RequestId_, other_.m_RequestId_);
             swap(m_BuildModelStatus_, other_.m_BuildModelStatus_);
             swap(m_ModelQuality_, other_.m_ModelQuality_);
         }  
 
         bool WPS_BuildModelReportMessage::operator == (const WPS_BuildModelReportMessage& other_) const {
-            if (m_SourceId_ != other_.m_SourceId_) {
-                return false;
-            }
-            if (m_DestinationId_ != other_.m_DestinationId_) {
+            if (m_RequestId_ != other_.m_RequestId_) {
                 return false;
             }
             if (m_BuildModelStatus_ != other_.m_BuildModelStatus_) {
@@ -326,8 +375,7 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "SourceId: " << sample.SourceId()<<", ";
-            o << "DestinationId: " << sample.DestinationId()<<", ";
+            o << "RequestId: " << sample.RequestId()<<", ";
             o << "BuildModelStatus: " << sample.BuildModelStatus()<<", ";
             o << "ModelQuality: " << sample.ModelQuality() ;
             o <<"]";
@@ -476,28 +524,20 @@ namespace WorldPerceptionModel {
         // ---- WPS_DroneLocalizationMessage: 
 
         WPS_DroneLocalizationMessage::WPS_DroneLocalizationMessage() :
-            m_RequestId_ ("")  {
+            m_RequestId_ (0)  {
         }   
 
         WPS_DroneLocalizationMessage::WPS_DroneLocalizationMessage (
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
-            const std::string& RequestId,
+            int32_t RequestId,
             const WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationData& Data)
             :
-                m_SourceId_( SourceId ),
-                m_DestinationId_( DestinationId ),
                 m_RequestId_( RequestId ),
                 m_Data_( Data ) {
         }
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_DroneLocalizationMessage::WPS_DroneLocalizationMessage(WPS_DroneLocalizationMessage&& other_) OMG_NOEXCEPT  :m_SourceId_ (std::move(other_.m_SourceId_))
-        ,
-        m_DestinationId_ (std::move(other_.m_DestinationId_))
-        ,
-        m_RequestId_ (std::move(other_.m_RequestId_))
+        WPS_DroneLocalizationMessage::WPS_DroneLocalizationMessage(WPS_DroneLocalizationMessage&& other_) OMG_NOEXCEPT  :m_RequestId_ (std::move(other_.m_RequestId_))
         ,
         m_Data_ (std::move(other_.m_Data_))
         {
@@ -514,19 +554,11 @@ namespace WorldPerceptionModel {
         void WPS_DroneLocalizationMessage::swap(WPS_DroneLocalizationMessage& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_SourceId_, other_.m_SourceId_);
-            swap(m_DestinationId_, other_.m_DestinationId_);
             swap(m_RequestId_, other_.m_RequestId_);
             swap(m_Data_, other_.m_Data_);
         }  
 
         bool WPS_DroneLocalizationMessage::operator == (const WPS_DroneLocalizationMessage& other_) const {
-            if (m_SourceId_ != other_.m_SourceId_) {
-                return false;
-            }
-            if (m_DestinationId_ != other_.m_DestinationId_) {
-                return false;
-            }
             if (m_RequestId_ != other_.m_RequestId_) {
                 return false;
             }
@@ -543,8 +575,6 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "SourceId: " << sample.SourceId()<<", ";
-            o << "DestinationId: " << sample.DestinationId()<<", ";
             o << "RequestId: " << sample.RequestId()<<", ";
             o << "Data: " << sample.Data() ;
             o <<"]";
@@ -573,24 +603,16 @@ namespace WorldPerceptionModel {
         }   
 
         WPS_DroneLocalizationReportMessage::WPS_DroneLocalizationReportMessage (
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
             const WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationStatusEnum& DroneLocalizationStatus,
             bool docked)
             :
-                m_SourceId_( SourceId ),
-                m_DestinationId_( DestinationId ),
                 m_DroneLocalizationStatus_( DroneLocalizationStatus ),
                 m_docked_( docked ) {
         }
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_DroneLocalizationReportMessage::WPS_DroneLocalizationReportMessage(WPS_DroneLocalizationReportMessage&& other_) OMG_NOEXCEPT  :m_SourceId_ (std::move(other_.m_SourceId_))
-        ,
-        m_DestinationId_ (std::move(other_.m_DestinationId_))
-        ,
-        m_DroneLocalizationStatus_ (std::move(other_.m_DroneLocalizationStatus_))
+        WPS_DroneLocalizationReportMessage::WPS_DroneLocalizationReportMessage(WPS_DroneLocalizationReportMessage&& other_) OMG_NOEXCEPT  :m_DroneLocalizationStatus_ (std::move(other_.m_DroneLocalizationStatus_))
         ,
         m_docked_ (std::move(other_.m_docked_))
         {
@@ -607,19 +629,11 @@ namespace WorldPerceptionModel {
         void WPS_DroneLocalizationReportMessage::swap(WPS_DroneLocalizationReportMessage& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_SourceId_, other_.m_SourceId_);
-            swap(m_DestinationId_, other_.m_DestinationId_);
             swap(m_DroneLocalizationStatus_, other_.m_DroneLocalizationStatus_);
             swap(m_docked_, other_.m_docked_);
         }  
 
         bool WPS_DroneLocalizationReportMessage::operator == (const WPS_DroneLocalizationReportMessage& other_) const {
-            if (m_SourceId_ != other_.m_SourceId_) {
-                return false;
-            }
-            if (m_DestinationId_ != other_.m_DestinationId_) {
-                return false;
-            }
             if (m_DroneLocalizationStatus_ != other_.m_DroneLocalizationStatus_) {
                 return false;
             }
@@ -636,8 +650,6 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "SourceId: " << sample.SourceId()<<", ";
-            o << "DestinationId: " << sample.DestinationId()<<", ";
             o << "DroneLocalizationStatus: " << sample.DroneLocalizationStatus()<<", ";
             o << "docked: " << sample.docked() ;
             o <<"]";
@@ -890,28 +902,20 @@ namespace WorldPerceptionModel {
         // ---- WPS_UTMVehicleLocalizationMessage: 
 
         WPS_UTMVehicleLocalizationMessage::WPS_UTMVehicleLocalizationMessage() :
-            m_RequestId_ ("")  {
+            m_RequestId_ (0)  {
         }   
 
         WPS_UTMVehicleLocalizationMessage::WPS_UTMVehicleLocalizationMessage (
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
-            const std::string& RequestId,
+            int32_t RequestId,
             const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationData& Data)
             :
-                m_SourceId_( SourceId ),
-                m_DestinationId_( DestinationId ),
                 m_RequestId_( RequestId ),
                 m_Data_( Data ) {
         }
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_UTMVehicleLocalizationMessage::WPS_UTMVehicleLocalizationMessage(WPS_UTMVehicleLocalizationMessage&& other_) OMG_NOEXCEPT  :m_SourceId_ (std::move(other_.m_SourceId_))
-        ,
-        m_DestinationId_ (std::move(other_.m_DestinationId_))
-        ,
-        m_RequestId_ (std::move(other_.m_RequestId_))
+        WPS_UTMVehicleLocalizationMessage::WPS_UTMVehicleLocalizationMessage(WPS_UTMVehicleLocalizationMessage&& other_) OMG_NOEXCEPT  :m_RequestId_ (std::move(other_.m_RequestId_))
         ,
         m_Data_ (std::move(other_.m_Data_))
         {
@@ -928,19 +932,11 @@ namespace WorldPerceptionModel {
         void WPS_UTMVehicleLocalizationMessage::swap(WPS_UTMVehicleLocalizationMessage& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_SourceId_, other_.m_SourceId_);
-            swap(m_DestinationId_, other_.m_DestinationId_);
             swap(m_RequestId_, other_.m_RequestId_);
             swap(m_Data_, other_.m_Data_);
         }  
 
         bool WPS_UTMVehicleLocalizationMessage::operator == (const WPS_UTMVehicleLocalizationMessage& other_) const {
-            if (m_SourceId_ != other_.m_SourceId_) {
-                return false;
-            }
-            if (m_DestinationId_ != other_.m_DestinationId_) {
-                return false;
-            }
             if (m_RequestId_ != other_.m_RequestId_) {
                 return false;
             }
@@ -957,8 +953,6 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "SourceId: " << sample.SourceId()<<", ";
-            o << "DestinationId: " << sample.DestinationId()<<", ";
             o << "RequestId: " << sample.RequestId()<<", ";
             o << "Data: " << sample.Data() ;
             o <<"]";
@@ -982,18 +976,18 @@ namespace WorldPerceptionModel {
         // ---- WPS_UTMVehicleLocalizationReportData: 
 
         WPS_UTMVehicleLocalizationReportData::WPS_UTMVehicleLocalizationReportData() :
-            m_DroneLocalizationStatus_(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum::Idle) ,
+            m_UTMVehicleLocalizationStatus_(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum::Idle) ,
             m_docked_ (0)  {
         }   
 
         WPS_UTMVehicleLocalizationReportData::WPS_UTMVehicleLocalizationReportData (
-            const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& DroneLocalizationStatus,
+            const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum& UTMVehicleLocalizationStatus,
             bool docked,
-            const DDS_GRI::DDSCommon::DDS_GeoPoint& UTMCenterFrame,
+            const WorldPerceptionModel::WPS_TDPoint& UTMCenterFrame,
             const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation& VehiclePosOrient,
             const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::RelevantLinkedFrames_type& RelevantFrames)
             :
-                m_DroneLocalizationStatus_( DroneLocalizationStatus ),
+                m_UTMVehicleLocalizationStatus_( UTMVehicleLocalizationStatus ),
                 m_docked_( docked ),
                 m_UTMCenterFrame_( UTMCenterFrame ),
                 m_VehiclePosOrient_( VehiclePosOrient ),
@@ -1002,7 +996,7 @@ namespace WorldPerceptionModel {
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_UTMVehicleLocalizationReportData::WPS_UTMVehicleLocalizationReportData(WPS_UTMVehicleLocalizationReportData&& other_) OMG_NOEXCEPT  :m_DroneLocalizationStatus_ (std::move(other_.m_DroneLocalizationStatus_))
+        WPS_UTMVehicleLocalizationReportData::WPS_UTMVehicleLocalizationReportData(WPS_UTMVehicleLocalizationReportData&& other_) OMG_NOEXCEPT  :m_UTMVehicleLocalizationStatus_ (std::move(other_.m_UTMVehicleLocalizationStatus_))
         ,
         m_docked_ (std::move(other_.m_docked_))
         ,
@@ -1025,7 +1019,7 @@ namespace WorldPerceptionModel {
         void WPS_UTMVehicleLocalizationReportData::swap(WPS_UTMVehicleLocalizationReportData& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_DroneLocalizationStatus_, other_.m_DroneLocalizationStatus_);
+            swap(m_UTMVehicleLocalizationStatus_, other_.m_UTMVehicleLocalizationStatus_);
             swap(m_docked_, other_.m_docked_);
             swap(m_UTMCenterFrame_, other_.m_UTMCenterFrame_);
             swap(m_VehiclePosOrient_, other_.m_VehiclePosOrient_);
@@ -1033,7 +1027,7 @@ namespace WorldPerceptionModel {
         }  
 
         bool WPS_UTMVehicleLocalizationReportData::operator == (const WPS_UTMVehicleLocalizationReportData& other_) const {
-            if (m_DroneLocalizationStatus_ != other_.m_DroneLocalizationStatus_) {
+            if (m_UTMVehicleLocalizationStatus_ != other_.m_UTMVehicleLocalizationStatus_) {
                 return false;
             }
             if (m_docked_ != other_.m_docked_) {
@@ -1058,7 +1052,7 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "DroneLocalizationStatus: " << sample.DroneLocalizationStatus()<<", ";
+            o << "UTMVehicleLocalizationStatus: " << sample.UTMVehicleLocalizationStatus()<<", ";
             o << "docked: " << sample.docked()<<", ";
             o << "UTMCenterFrame: " << sample.UTMCenterFrame()<<", ";
             o << "VehiclePosOrient: " << sample.VehiclePosOrient()<<", ";
@@ -1069,24 +1063,21 @@ namespace WorldPerceptionModel {
 
         // ---- WPS_UTMVehicleLocalizationReportMessage: 
 
-        WPS_UTMVehicleLocalizationReportMessage::WPS_UTMVehicleLocalizationReportMessage()  {
+        WPS_UTMVehicleLocalizationReportMessage::WPS_UTMVehicleLocalizationReportMessage() :
+            m_RequestId_ (0)  {
         }   
 
         WPS_UTMVehicleLocalizationReportMessage::WPS_UTMVehicleLocalizationReportMessage (
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
+            int32_t RequestId,
             const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportData& Data)
             :
-                m_SourceId_( SourceId ),
-                m_DestinationId_( DestinationId ),
+                m_RequestId_( RequestId ),
                 m_Data_( Data ) {
         }
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_UTMVehicleLocalizationReportMessage::WPS_UTMVehicleLocalizationReportMessage(WPS_UTMVehicleLocalizationReportMessage&& other_) OMG_NOEXCEPT  :m_SourceId_ (std::move(other_.m_SourceId_))
-        ,
-        m_DestinationId_ (std::move(other_.m_DestinationId_))
+        WPS_UTMVehicleLocalizationReportMessage::WPS_UTMVehicleLocalizationReportMessage(WPS_UTMVehicleLocalizationReportMessage&& other_) OMG_NOEXCEPT  :m_RequestId_ (std::move(other_.m_RequestId_))
         ,
         m_Data_ (std::move(other_.m_Data_))
         {
@@ -1103,16 +1094,12 @@ namespace WorldPerceptionModel {
         void WPS_UTMVehicleLocalizationReportMessage::swap(WPS_UTMVehicleLocalizationReportMessage& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_SourceId_, other_.m_SourceId_);
-            swap(m_DestinationId_, other_.m_DestinationId_);
+            swap(m_RequestId_, other_.m_RequestId_);
             swap(m_Data_, other_.m_Data_);
         }  
 
         bool WPS_UTMVehicleLocalizationReportMessage::operator == (const WPS_UTMVehicleLocalizationReportMessage& other_) const {
-            if (m_SourceId_ != other_.m_SourceId_) {
-                return false;
-            }
-            if (m_DestinationId_ != other_.m_DestinationId_) {
+            if (m_RequestId_ != other_.m_RequestId_) {
                 return false;
             }
             if (m_Data_ != other_.m_Data_) {
@@ -1128,8 +1115,7 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "SourceId: " << sample.SourceId()<<", ";
-            o << "DestinationId: " << sample.DestinationId()<<", ";
+            o << "RequestId: " << sample.RequestId()<<", ";
             o << "Data: " << sample.Data() ;
             o <<"]";
             return o;
@@ -1286,28 +1272,20 @@ namespace WorldPerceptionModel {
         // ---- WPS_ModelDifferencesMessage: 
 
         WPS_ModelDifferencesMessage::WPS_ModelDifferencesMessage() :
-            m_RequestId_ ("")  {
+            m_RequestId_ (0)  {
         }   
 
         WPS_ModelDifferencesMessage::WPS_ModelDifferencesMessage (
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
-            const std::string& RequestId,
+            int32_t RequestId,
             const WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesData& Data)
             :
-                m_SourceId_( SourceId ),
-                m_DestinationId_( DestinationId ),
                 m_RequestId_( RequestId ),
                 m_Data_( Data ) {
         }
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_ModelDifferencesMessage::WPS_ModelDifferencesMessage(WPS_ModelDifferencesMessage&& other_) OMG_NOEXCEPT  :m_SourceId_ (std::move(other_.m_SourceId_))
-        ,
-        m_DestinationId_ (std::move(other_.m_DestinationId_))
-        ,
-        m_RequestId_ (std::move(other_.m_RequestId_))
+        WPS_ModelDifferencesMessage::WPS_ModelDifferencesMessage(WPS_ModelDifferencesMessage&& other_) OMG_NOEXCEPT  :m_RequestId_ (std::move(other_.m_RequestId_))
         ,
         m_Data_ (std::move(other_.m_Data_))
         {
@@ -1324,19 +1302,11 @@ namespace WorldPerceptionModel {
         void WPS_ModelDifferencesMessage::swap(WPS_ModelDifferencesMessage& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_SourceId_, other_.m_SourceId_);
-            swap(m_DestinationId_, other_.m_DestinationId_);
             swap(m_RequestId_, other_.m_RequestId_);
             swap(m_Data_, other_.m_Data_);
         }  
 
         bool WPS_ModelDifferencesMessage::operator == (const WPS_ModelDifferencesMessage& other_) const {
-            if (m_SourceId_ != other_.m_SourceId_) {
-                return false;
-            }
-            if (m_DestinationId_ != other_.m_DestinationId_) {
-                return false;
-            }
             if (m_RequestId_ != other_.m_RequestId_) {
                 return false;
             }
@@ -1353,8 +1323,6 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "SourceId: " << sample.SourceId()<<", ";
-            o << "DestinationId: " << sample.DestinationId()<<", ";
             o << "RequestId: " << sample.RequestId()<<", ";
             o << "Data: " << sample.Data() ;
             o <<"]";
@@ -1384,24 +1352,21 @@ namespace WorldPerceptionModel {
         // ---- WPS_ModelDifferencesReportMessage: 
 
         WPS_ModelDifferencesReportMessage::WPS_ModelDifferencesReportMessage() :
+            m_RequestId_ (0) ,
             m_ModelDifferencesStatus_(WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesStatusEnum::Idle)  {
         }   
 
         WPS_ModelDifferencesReportMessage::WPS_ModelDifferencesReportMessage (
-            const DDS_GRI::DDSCommon::DDS_Identifier& SourceId,
-            const DDS_GRI::DDSCommon::DDS_Identifier& DestinationId,
+            int32_t RequestId,
             const WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesStatusEnum& ModelDifferencesStatus)
             :
-                m_SourceId_( SourceId ),
-                m_DestinationId_( DestinationId ),
+                m_RequestId_( RequestId ),
                 m_ModelDifferencesStatus_( ModelDifferencesStatus ) {
         }
 
         #ifdef RTI_CXX11_RVALUE_REFERENCES
         #ifdef RTI_CXX11_NO_IMPLICIT_MOVE_OPERATIONS
-        WPS_ModelDifferencesReportMessage::WPS_ModelDifferencesReportMessage(WPS_ModelDifferencesReportMessage&& other_) OMG_NOEXCEPT  :m_SourceId_ (std::move(other_.m_SourceId_))
-        ,
-        m_DestinationId_ (std::move(other_.m_DestinationId_))
+        WPS_ModelDifferencesReportMessage::WPS_ModelDifferencesReportMessage(WPS_ModelDifferencesReportMessage&& other_) OMG_NOEXCEPT  :m_RequestId_ (std::move(other_.m_RequestId_))
         ,
         m_ModelDifferencesStatus_ (std::move(other_.m_ModelDifferencesStatus_))
         {
@@ -1418,16 +1383,12 @@ namespace WorldPerceptionModel {
         void WPS_ModelDifferencesReportMessage::swap(WPS_ModelDifferencesReportMessage& other_)  OMG_NOEXCEPT 
         {
             using std::swap;
-            swap(m_SourceId_, other_.m_SourceId_);
-            swap(m_DestinationId_, other_.m_DestinationId_);
+            swap(m_RequestId_, other_.m_RequestId_);
             swap(m_ModelDifferencesStatus_, other_.m_ModelDifferencesStatus_);
         }  
 
         bool WPS_ModelDifferencesReportMessage::operator == (const WPS_ModelDifferencesReportMessage& other_) const {
-            if (m_SourceId_ != other_.m_SourceId_) {
-                return false;
-            }
-            if (m_DestinationId_ != other_.m_DestinationId_) {
+            if (m_RequestId_ != other_.m_RequestId_) {
                 return false;
             }
             if (m_ModelDifferencesStatus_ != other_.m_ModelDifferencesStatus_) {
@@ -1443,8 +1404,7 @@ namespace WorldPerceptionModel {
         {
             ::rti::util::StreamFlagSaver flag_saver (o);
             o <<"[";
-            o << "SourceId: " << sample.SourceId()<<", ";
-            o << "DestinationId: " << sample.DestinationId()<<", ";
+            o << "RequestId: " << sample.RequestId()<<", ";
             o << "ModelDifferencesStatus: " << sample.ModelDifferencesStatus() ;
             o <<"]";
             return o;
@@ -1458,6 +1418,227 @@ namespace WorldPerceptionModel {
 
 namespace rti { 
     namespace topic {
+
+        #ifndef NDDS_STANDALONE_TYPE
+
+        template<>
+        struct native_type_code< WorldPerceptionModel::WPS_TDPoint > {
+            static DDS_TypeCode * get()
+            {
+                using namespace ::rti::topic::interpreter;
+
+                static RTIBool is_initialized = RTI_FALSE;
+
+                static DDS_TypeCode_Member WPS_TDPoint_g_tc_members[3]=
+                {
+
+                    {
+                        (char *)"x",/* Member name */
+                        {
+                            0,/* Representation ID */
+                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                            -1, /* Bitfield bits */
+                            NULL/* Member type code is assigned later */
+                        },
+                        0, /* Ignored */
+                        0, /* Ignored */
+                        0, /* Ignored */
+                        NULL, /* Ignored */
+                        RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
+                        DDS_PUBLIC_MEMBER,/* Member visibility */
+                        1,
+                        NULL, /* Ignored */
+                        RTICdrTypeCodeAnnotations_INITIALIZER
+                    }, 
+                    {
+                        (char *)"y",/* Member name */
+                        {
+                            1,/* Representation ID */
+                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                            -1, /* Bitfield bits */
+                            NULL/* Member type code is assigned later */
+                        },
+                        0, /* Ignored */
+                        0, /* Ignored */
+                        0, /* Ignored */
+                        NULL, /* Ignored */
+                        RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
+                        DDS_PUBLIC_MEMBER,/* Member visibility */
+                        1,
+                        NULL, /* Ignored */
+                        RTICdrTypeCodeAnnotations_INITIALIZER
+                    }, 
+                    {
+                        (char *)"z",/* Member name */
+                        {
+                            2,/* Representation ID */
+                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                            -1, /* Bitfield bits */
+                            NULL/* Member type code is assigned later */
+                        },
+                        0, /* Ignored */
+                        0, /* Ignored */
+                        0, /* Ignored */
+                        NULL, /* Ignored */
+                        RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
+                        DDS_PUBLIC_MEMBER,/* Member visibility */
+                        1,
+                        NULL, /* Ignored */
+                        RTICdrTypeCodeAnnotations_INITIALIZER
+                    }
+                };
+
+                static DDS_TypeCode WPS_TDPoint_g_tc =
+                {{
+                        DDS_TK_STRUCT, /* Kind */
+                        DDS_BOOLEAN_FALSE, /* Ignored */
+                        -1, /*Ignored*/
+                        (char *)"WorldPerceptionModel::WPS_TDPoint", /* Name */
+                        NULL, /* Ignored */      
+                        0, /* Ignored */
+                        0, /* Ignored */
+                        NULL, /* Ignored */
+                        3, /* Number of members */
+                        WPS_TDPoint_g_tc_members, /* Members */
+                        DDS_VM_NONE, /* Ignored */
+                        RTICdrTypeCodeAnnotations_INITIALIZER,
+                        DDS_BOOLEAN_TRUE, /* _isCopyable */
+                        NULL, /* _sampleAccessInfo: assigned later */
+                        NULL /* _typePlugin: assigned later */
+                    }}; /* Type code for WPS_TDPoint*/
+
+                if (is_initialized) {
+                    return &WPS_TDPoint_g_tc;
+                }
+
+                WPS_TDPoint_g_tc._data._annotations._allowedDataRepresentationMask = 5;
+
+                WPS_TDPoint_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_double;
+                WPS_TDPoint_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_double;
+                WPS_TDPoint_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_double;
+
+                /* Initialize the values for member annotations. */
+                WPS_TDPoint_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[0]._annotations._defaultValue._u.double_value = 0.0;
+                WPS_TDPoint_g_tc_members[0]._annotations._minValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[0]._annotations._minValue._u.double_value = RTIXCdrDouble_MIN;
+                WPS_TDPoint_g_tc_members[0]._annotations._maxValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[0]._annotations._maxValue._u.double_value = RTIXCdrDouble_MAX;
+
+                WPS_TDPoint_g_tc_members[1]._annotations._defaultValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[1]._annotations._defaultValue._u.double_value = 0.0;
+                WPS_TDPoint_g_tc_members[1]._annotations._minValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[1]._annotations._minValue._u.double_value = RTIXCdrDouble_MIN;
+                WPS_TDPoint_g_tc_members[1]._annotations._maxValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[1]._annotations._maxValue._u.double_value = RTIXCdrDouble_MAX;
+
+                WPS_TDPoint_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[2]._annotations._defaultValue._u.double_value = 0.0;
+                WPS_TDPoint_g_tc_members[2]._annotations._minValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[2]._annotations._minValue._u.double_value = RTIXCdrDouble_MIN;
+                WPS_TDPoint_g_tc_members[2]._annotations._maxValue._d = RTI_XCDR_TK_DOUBLE;
+                WPS_TDPoint_g_tc_members[2]._annotations._maxValue._u.double_value = RTIXCdrDouble_MAX;
+
+                WPS_TDPoint_g_tc._data._sampleAccessInfo = sample_access_info();
+                WPS_TDPoint_g_tc._data._typePlugin = type_plugin_info();    
+
+                is_initialized = RTI_TRUE;
+
+                return &WPS_TDPoint_g_tc;
+            }
+
+            static RTIXCdrSampleAccessInfo * sample_access_info()
+            {
+                static RTIBool is_initialized = RTI_FALSE;
+
+                WorldPerceptionModel::WPS_TDPoint *sample;
+
+                static RTIXCdrMemberAccessInfo WPS_TDPoint_g_memberAccessInfos[3] =
+                {RTIXCdrMemberAccessInfo_INITIALIZER};
+
+                static RTIXCdrSampleAccessInfo WPS_TDPoint_g_sampleAccessInfo = 
+                RTIXCdrSampleAccessInfo_INITIALIZER;
+
+                if (is_initialized) {
+                    return (RTIXCdrSampleAccessInfo*) &WPS_TDPoint_g_sampleAccessInfo;
+                }
+
+                RTIXCdrHeap_allocateStruct(
+                    &sample, 
+                    WorldPerceptionModel::WPS_TDPoint);
+                if (sample == NULL) {
+                    return NULL;
+                }
+
+                WPS_TDPoint_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
+                (RTIXCdrUnsignedLong) ((char *)&sample->x() - (char *)sample);
+
+                WPS_TDPoint_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
+                (RTIXCdrUnsignedLong) ((char *)&sample->y() - (char *)sample);
+
+                WPS_TDPoint_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
+                (RTIXCdrUnsignedLong) ((char *)&sample->z() - (char *)sample);
+
+                WPS_TDPoint_g_sampleAccessInfo.memberAccessInfos = 
+                WPS_TDPoint_g_memberAccessInfos;
+
+                {
+                    size_t candidateTypeSize = sizeof(WorldPerceptionModel::WPS_TDPoint);
+
+                    if (candidateTypeSize > RTIXCdrUnsignedLong_MAX) {
+                        WPS_TDPoint_g_sampleAccessInfo.typeSize[0] =
+                        RTIXCdrUnsignedLong_MAX;
+                    } else {
+                        WPS_TDPoint_g_sampleAccessInfo.typeSize[0] =
+                        (RTIXCdrUnsignedLong) candidateTypeSize;
+                    }
+                }
+
+                WPS_TDPoint_g_sampleAccessInfo.useGetMemberValueOnlyWithRef =
+                RTI_XCDR_TRUE;
+
+                WPS_TDPoint_g_sampleAccessInfo.getMemberValuePointerFcn = 
+                interpreter::get_aggregation_value_pointer< WorldPerceptionModel::WPS_TDPoint >;
+
+                WPS_TDPoint_g_sampleAccessInfo.languageBinding = 
+                RTI_XCDR_TYPE_BINDING_CPP_11_STL ;
+
+                RTIXCdrHeap_freeStruct(sample);
+                is_initialized = RTI_TRUE;
+                return (RTIXCdrSampleAccessInfo*) &WPS_TDPoint_g_sampleAccessInfo;
+            }
+
+            static RTIXCdrTypePlugin * type_plugin_info()
+            {
+                static RTIXCdrTypePlugin WPS_TDPoint_g_typePlugin = 
+                {
+                    NULL, /* serialize */
+                    NULL, /* serialize_key */
+                    NULL, /* deserialize_sample */
+                    NULL, /* deserialize_key_sample */
+                    NULL, /* skip */
+                    NULL, /* get_serialized_sample_size */
+                    NULL, /* get_serialized_sample_max_size_ex */
+                    NULL, /* get_serialized_key_max_size_ex */
+                    NULL, /* get_serialized_sample_min_size */
+                    NULL, /* serialized_sample_to_key */
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL
+                };
+
+                return &WPS_TDPoint_g_typePlugin;
+            }
+        }; // native_type_code
+        #endif
+
+        const ::dds::core::xtypes::StructType& dynamic_type< WorldPerceptionModel::WPS_TDPoint >::get()
+        {
+            return static_cast<const ::dds::core::xtypes::StructType&>(
+                ::rti::core::native_conversions::cast_from_native< ::dds::core::xtypes::DynamicType >(
+                    *(native_type_code< WorldPerceptionModel::WPS_TDPoint >::get())));
+        }
 
         #ifndef NDDS_STANDALONE_TYPE
 
@@ -1494,11 +1675,11 @@ namespace rti {
                     return &RegionOfInterest_type_g_tc;
                 }
 
-                RegionOfInterest_type_g_tc_sequence = initialize_sequence_typecode< ::rti::core::bounded_sequence< DDS_GRI::DDSCommon::DDS_GeoPoint, (WorldPerceptionModel::MAX_POINTS_IN_REGION_OF_INTEREST) > >(((WorldPerceptionModel::MAX_POINTS_IN_REGION_OF_INTEREST)));
+                RegionOfInterest_type_g_tc_sequence = initialize_sequence_typecode< ::rti::core::bounded_sequence< WorldPerceptionModel::WPS_TDPoint, (WorldPerceptionModel::MAX_POINTS_IN_REGION_OF_INTEREST) > >(((WorldPerceptionModel::MAX_POINTS_IN_REGION_OF_INTEREST)));
 
                 RegionOfInterest_type_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                RegionOfInterest_type_g_tc_sequence._data._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_GeoPoint>::get().native();
+                RegionOfInterest_type_g_tc_sequence._data._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_TDPoint>::get().native();
                 RegionOfInterest_type_g_tc._data._typeCode =  (RTICdrTypeCode *)& RegionOfInterest_type_g_tc_sequence;
 
                 /* Initialize the values for member annotations. */
@@ -1597,6 +1778,8 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
+                static DDS_TypeCode WPS_BuildModelParameters_g_tc_PathToFolder_string;
+
                 static DDS_TypeCode_Member WPS_BuildModelParameters_g_tc_members[2]=
                 {
 
@@ -1661,9 +1844,11 @@ namespace rti {
                     return &WPS_BuildModelParameters_g_tc;
                 }
 
+                WPS_BuildModelParameters_g_tc_PathToFolder_string = initialize_string_typecode((255));
+
                 WPS_BuildModelParameters_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_BuildModelParameters_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::String200_AliasTag_t>::get().native();
+                WPS_BuildModelParameters_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&WPS_BuildModelParameters_g_tc_PathToFolder_string;
                 WPS_BuildModelParameters_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::RegionOfInterest_type_AliasTag_t>::get().native();
 
                 /* Initialize the values for member annotations. */
@@ -2125,11 +2310,11 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_BuildModelMessage_g_tc_members[4]=
+                static DDS_TypeCode_Member WPS_BuildModelMessage_g_tc_members[2]=
                 {
 
                     {
-                        (char *)"SourceId",/* Member name */
+                        (char *)"RequestId",/* Member name */
                         {
                             0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -2147,45 +2332,9 @@ namespace rti {
                         RTICdrTypeCodeAnnotations_INITIALIZER
                     }, 
                     {
-                        (char *)"DestinationId",/* Member name */
-                        {
-                            1,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
-                        (char *)"RequestId",/* Member name */
-                        {
-                            2,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
                         (char *)"Data",/* Member name */
                         {
-                            3,/* Representation ID */
+                            1,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -2212,7 +2361,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        4, /* Number of members */
+                        2, /* Number of members */
                         WPS_BuildModelMessage_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -2227,15 +2376,16 @@ namespace rti {
 
                 WPS_BuildModelMessage_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_BuildModelMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_BuildModelMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_BuildModelMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_GUID_AliasTag_t>::get().native();
-                WPS_BuildModelMessage_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelData>::get().native();
+                WPS_BuildModelMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+                WPS_BuildModelMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelData>::get().native();
 
                 /* Initialize the values for member annotations. */
-
-                WPS_BuildModelMessage_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_STRING;
-                WPS_BuildModelMessage_g_tc_members[2]._annotations._defaultValue._u.string_value = (DDS_Char *) "";
+                WPS_BuildModelMessage_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelMessage_g_tc_members[0]._annotations._defaultValue._u.long_value = 0;
+                WPS_BuildModelMessage_g_tc_members[0]._annotations._minValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelMessage_g_tc_members[0]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
+                WPS_BuildModelMessage_g_tc_members[0]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelMessage_g_tc_members[0]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
 
                 WPS_BuildModelMessage_g_tc._data._sampleAccessInfo = sample_access_info();
                 WPS_BuildModelMessage_g_tc._data._typePlugin = type_plugin_info();    
@@ -2251,7 +2401,7 @@ namespace rti {
 
                 WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelMessage *sample;
 
-                static RTIXCdrMemberAccessInfo WPS_BuildModelMessage_g_memberAccessInfos[4] =
+                static RTIXCdrMemberAccessInfo WPS_BuildModelMessage_g_memberAccessInfos[2] =
                 {RTIXCdrMemberAccessInfo_INITIALIZER};
 
                 static RTIXCdrSampleAccessInfo WPS_BuildModelMessage_g_sampleAccessInfo = 
@@ -2269,15 +2419,9 @@ namespace rti {
                 }
 
                 WPS_BuildModelMessage_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->SourceId() - (char *)sample);
-
-                WPS_BuildModelMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DestinationId() - (char *)sample);
-
-                WPS_BuildModelMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->RequestId() - (char *)sample);
 
-                WPS_BuildModelMessage_g_memberAccessInfos[3].bindingMemberValueOffset[0] = 
+                WPS_BuildModelMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->Data() - (char *)sample);
 
                 WPS_BuildModelMessage_g_sampleAccessInfo.memberAccessInfos = 
@@ -2351,7 +2495,7 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_BuildModelStatusEnum_g_tc_members[4]=
+                static DDS_TypeCode_Member WPS_BuildModelStatusEnum_g_tc_members[5]=
                 {
 
                     {
@@ -2429,6 +2573,25 @@ namespace rti {
                         1,
                         NULL, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER
+                    }, 
+                    {
+                        (char *)"Failure",/* Member name */
+                        {
+                            0, /* Ignored */
+                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
+                            -1, /* Bitfield bits */
+                            NULL/* Member type code is assigned later */
+                        },
+                        WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum::Failure, 
+                        0, /* Ignored */
+                        0, /* Ignored */
+                        NULL, /* Ignored */
+                        RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
+                        DDS_PRIVATE_MEMBER,/* Member visibility */ 
+
+                        1,
+                        NULL, /* Ignored */
+                        RTICdrTypeCodeAnnotations_INITIALIZER
                     }
                 };
 
@@ -2442,7 +2605,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        4, /* Number of members */
+                        5, /* Number of members */
                         WPS_BuildModelStatusEnum_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Type Modifier */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -2555,11 +2718,11 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_BuildModelReportMessage_g_tc_members[4]=
+                static DDS_TypeCode_Member WPS_BuildModelReportMessage_g_tc_members[3]=
                 {
 
                     {
-                        (char *)"SourceId",/* Member name */
+                        (char *)"RequestId",/* Member name */
                         {
                             0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -2577,27 +2740,9 @@ namespace rti {
                         RTICdrTypeCodeAnnotations_INITIALIZER
                     }, 
                     {
-                        (char *)"DestinationId",/* Member name */
-                        {
-                            1,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
                         (char *)"BuildModelStatus",/* Member name */
                         {
-                            2,/* Representation ID */
+                            1,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -2615,7 +2760,7 @@ namespace rti {
                     {
                         (char *)"ModelQuality",/* Member name */
                         {
-                            3,/* Representation ID */
+                            2,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -2642,7 +2787,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        4, /* Number of members */
+                        3, /* Number of members */
                         WPS_BuildModelReportMessage_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -2657,22 +2802,27 @@ namespace rti {
 
                 WPS_BuildModelReportMessage_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_BuildModelReportMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_BuildModelReportMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_BuildModelReportMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum>::get().native();
-                WPS_BuildModelReportMessage_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+                WPS_BuildModelReportMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+                WPS_BuildModelReportMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum>::get().native();
+                WPS_BuildModelReportMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
 
                 /* Initialize the values for member annotations. */
+                WPS_BuildModelReportMessage_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelReportMessage_g_tc_members[0]._annotations._defaultValue._u.long_value = 0;
+                WPS_BuildModelReportMessage_g_tc_members[0]._annotations._minValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelReportMessage_g_tc_members[0]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
+                WPS_BuildModelReportMessage_g_tc_members[0]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelReportMessage_g_tc_members[0]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
 
-                WPS_BuildModelReportMessage_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_ENUM;
-                WPS_BuildModelReportMessage_g_tc_members[2]._annotations._defaultValue._u.enumerated_value = 0;
+                WPS_BuildModelReportMessage_g_tc_members[1]._annotations._defaultValue._d = RTI_XCDR_TK_ENUM;
+                WPS_BuildModelReportMessage_g_tc_members[1]._annotations._defaultValue._u.enumerated_value = 0;
 
-                WPS_BuildModelReportMessage_g_tc_members[3]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
-                WPS_BuildModelReportMessage_g_tc_members[3]._annotations._defaultValue._u.long_value = 0;
-                WPS_BuildModelReportMessage_g_tc_members[3]._annotations._minValue._d = RTI_XCDR_TK_LONG;
-                WPS_BuildModelReportMessage_g_tc_members[3]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
-                WPS_BuildModelReportMessage_g_tc_members[3]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
-                WPS_BuildModelReportMessage_g_tc_members[3]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
+                WPS_BuildModelReportMessage_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelReportMessage_g_tc_members[2]._annotations._defaultValue._u.long_value = 0;
+                WPS_BuildModelReportMessage_g_tc_members[2]._annotations._minValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelReportMessage_g_tc_members[2]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
+                WPS_BuildModelReportMessage_g_tc_members[2]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
+                WPS_BuildModelReportMessage_g_tc_members[2]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
 
                 WPS_BuildModelReportMessage_g_tc._data._sampleAccessInfo = sample_access_info();
                 WPS_BuildModelReportMessage_g_tc._data._typePlugin = type_plugin_info();    
@@ -2688,7 +2838,7 @@ namespace rti {
 
                 WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelReportMessage *sample;
 
-                static RTIXCdrMemberAccessInfo WPS_BuildModelReportMessage_g_memberAccessInfos[4] =
+                static RTIXCdrMemberAccessInfo WPS_BuildModelReportMessage_g_memberAccessInfos[3] =
                 {RTIXCdrMemberAccessInfo_INITIALIZER};
 
                 static RTIXCdrSampleAccessInfo WPS_BuildModelReportMessage_g_sampleAccessInfo = 
@@ -2706,15 +2856,12 @@ namespace rti {
                 }
 
                 WPS_BuildModelReportMessage_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->SourceId() - (char *)sample);
+                (RTIXCdrUnsignedLong) ((char *)&sample->RequestId() - (char *)sample);
 
                 WPS_BuildModelReportMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DestinationId() - (char *)sample);
-
-                WPS_BuildModelReportMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->BuildModelStatus() - (char *)sample);
 
-                WPS_BuildModelReportMessage_g_memberAccessInfos[3].bindingMemberValueOffset[0] = 
+                WPS_BuildModelReportMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->ModelQuality() - (char *)sample);
 
                 WPS_BuildModelReportMessage_g_sampleAccessInfo.memberAccessInfos = 
@@ -2788,6 +2935,9 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
+                static DDS_TypeCode WPS_DroneLocalizationParameters_g_tc_PathToFolder_string;
+                static DDS_TypeCode WPS_DroneLocalizationParameters_g_tc_LiveVideoURL_string;
+
                 static DDS_TypeCode_Member WPS_DroneLocalizationParameters_g_tc_members[2]=
                 {
 
@@ -2852,10 +3002,13 @@ namespace rti {
                     return &WPS_DroneLocalizationParameters_g_tc;
                 }
 
+                WPS_DroneLocalizationParameters_g_tc_PathToFolder_string = initialize_string_typecode((255));
+                WPS_DroneLocalizationParameters_g_tc_LiveVideoURL_string = initialize_string_typecode((255));
+
                 WPS_DroneLocalizationParameters_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_DroneLocalizationParameters_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::String200_AliasTag_t>::get().native();
-                WPS_DroneLocalizationParameters_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::String200_AliasTag_t>::get().native();
+                WPS_DroneLocalizationParameters_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&WPS_DroneLocalizationParameters_g_tc_PathToFolder_string;
+                WPS_DroneLocalizationParameters_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&WPS_DroneLocalizationParameters_g_tc_LiveVideoURL_string;
 
                 /* Initialize the values for member annotations. */
                 WPS_DroneLocalizationParameters_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_STRING;
@@ -3319,11 +3472,11 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_DroneLocalizationMessage_g_tc_members[4]=
+                static DDS_TypeCode_Member WPS_DroneLocalizationMessage_g_tc_members[2]=
                 {
 
                     {
-                        (char *)"SourceId",/* Member name */
+                        (char *)"RequestId",/* Member name */
                         {
                             0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -3341,45 +3494,9 @@ namespace rti {
                         RTICdrTypeCodeAnnotations_INITIALIZER
                     }, 
                     {
-                        (char *)"DestinationId",/* Member name */
-                        {
-                            1,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
-                        (char *)"RequestId",/* Member name */
-                        {
-                            2,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
                         (char *)"Data",/* Member name */
                         {
-                            3,/* Representation ID */
+                            1,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -3406,7 +3523,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        4, /* Number of members */
+                        2, /* Number of members */
                         WPS_DroneLocalizationMessage_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -3421,15 +3538,16 @@ namespace rti {
 
                 WPS_DroneLocalizationMessage_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_DroneLocalizationMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_DroneLocalizationMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_DroneLocalizationMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_GUID_AliasTag_t>::get().native();
-                WPS_DroneLocalizationMessage_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationData>::get().native();
+                WPS_DroneLocalizationMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+                WPS_DroneLocalizationMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationData>::get().native();
 
                 /* Initialize the values for member annotations. */
-
-                WPS_DroneLocalizationMessage_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_STRING;
-                WPS_DroneLocalizationMessage_g_tc_members[2]._annotations._defaultValue._u.string_value = (DDS_Char *) "";
+                WPS_DroneLocalizationMessage_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
+                WPS_DroneLocalizationMessage_g_tc_members[0]._annotations._defaultValue._u.long_value = 0;
+                WPS_DroneLocalizationMessage_g_tc_members[0]._annotations._minValue._d = RTI_XCDR_TK_LONG;
+                WPS_DroneLocalizationMessage_g_tc_members[0]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
+                WPS_DroneLocalizationMessage_g_tc_members[0]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
+                WPS_DroneLocalizationMessage_g_tc_members[0]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
 
                 WPS_DroneLocalizationMessage_g_tc._data._sampleAccessInfo = sample_access_info();
                 WPS_DroneLocalizationMessage_g_tc._data._typePlugin = type_plugin_info();    
@@ -3445,7 +3563,7 @@ namespace rti {
 
                 WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationMessage *sample;
 
-                static RTIXCdrMemberAccessInfo WPS_DroneLocalizationMessage_g_memberAccessInfos[4] =
+                static RTIXCdrMemberAccessInfo WPS_DroneLocalizationMessage_g_memberAccessInfos[2] =
                 {RTIXCdrMemberAccessInfo_INITIALIZER};
 
                 static RTIXCdrSampleAccessInfo WPS_DroneLocalizationMessage_g_sampleAccessInfo = 
@@ -3463,15 +3581,9 @@ namespace rti {
                 }
 
                 WPS_DroneLocalizationMessage_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->SourceId() - (char *)sample);
-
-                WPS_DroneLocalizationMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DestinationId() - (char *)sample);
-
-                WPS_DroneLocalizationMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->RequestId() - (char *)sample);
 
-                WPS_DroneLocalizationMessage_g_memberAccessInfos[3].bindingMemberValueOffset[0] = 
+                WPS_DroneLocalizationMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->Data() - (char *)sample);
 
                 WPS_DroneLocalizationMessage_g_sampleAccessInfo.memberAccessInfos = 
@@ -3711,49 +3823,13 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_DroneLocalizationReportMessage_g_tc_members[4]=
+                static DDS_TypeCode_Member WPS_DroneLocalizationReportMessage_g_tc_members[2]=
                 {
 
                     {
-                        (char *)"SourceId",/* Member name */
-                        {
-                            0,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
-                        (char *)"DestinationId",/* Member name */
-                        {
-                            1,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
                         (char *)"DroneLocalizationStatus",/* Member name */
                         {
-                            2,/* Representation ID */
+                            0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -3771,7 +3847,7 @@ namespace rti {
                     {
                         (char *)"docked",/* Member name */
                         {
-                            3,/* Representation ID */
+                            1,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -3798,7 +3874,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        4, /* Number of members */
+                        2, /* Number of members */
                         WPS_DroneLocalizationReportMessage_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -3813,18 +3889,15 @@ namespace rti {
 
                 WPS_DroneLocalizationReportMessage_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_DroneLocalizationReportMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_DroneLocalizationReportMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_DroneLocalizationReportMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationStatusEnum>::get().native();
-                WPS_DroneLocalizationReportMessage_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::interpreter::initialize_bool_typecode();
+                WPS_DroneLocalizationReportMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationStatusEnum>::get().native();
+                WPS_DroneLocalizationReportMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::interpreter::initialize_bool_typecode();
 
                 /* Initialize the values for member annotations. */
+                WPS_DroneLocalizationReportMessage_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_ENUM;
+                WPS_DroneLocalizationReportMessage_g_tc_members[0]._annotations._defaultValue._u.enumerated_value = 0;
 
-                WPS_DroneLocalizationReportMessage_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_ENUM;
-                WPS_DroneLocalizationReportMessage_g_tc_members[2]._annotations._defaultValue._u.enumerated_value = 0;
-
-                WPS_DroneLocalizationReportMessage_g_tc_members[3]._annotations._defaultValue._d = RTI_XCDR_TK_BOOLEAN;
-                WPS_DroneLocalizationReportMessage_g_tc_members[3]._annotations._defaultValue._u.boolean_value = 0;
+                WPS_DroneLocalizationReportMessage_g_tc_members[1]._annotations._defaultValue._d = RTI_XCDR_TK_BOOLEAN;
+                WPS_DroneLocalizationReportMessage_g_tc_members[1]._annotations._defaultValue._u.boolean_value = 0;
 
                 WPS_DroneLocalizationReportMessage_g_tc._data._sampleAccessInfo = sample_access_info();
                 WPS_DroneLocalizationReportMessage_g_tc._data._typePlugin = type_plugin_info();    
@@ -3840,7 +3913,7 @@ namespace rti {
 
                 WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationReportMessage *sample;
 
-                static RTIXCdrMemberAccessInfo WPS_DroneLocalizationReportMessage_g_memberAccessInfos[4] =
+                static RTIXCdrMemberAccessInfo WPS_DroneLocalizationReportMessage_g_memberAccessInfos[2] =
                 {RTIXCdrMemberAccessInfo_INITIALIZER};
 
                 static RTIXCdrSampleAccessInfo WPS_DroneLocalizationReportMessage_g_sampleAccessInfo = 
@@ -3858,15 +3931,9 @@ namespace rti {
                 }
 
                 WPS_DroneLocalizationReportMessage_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->SourceId() - (char *)sample);
-
-                WPS_DroneLocalizationReportMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DestinationId() - (char *)sample);
-
-                WPS_DroneLocalizationReportMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->DroneLocalizationStatus() - (char *)sample);
 
-                WPS_DroneLocalizationReportMessage_g_memberAccessInfos[3].bindingMemberValueOffset[0] = 
+                WPS_DroneLocalizationReportMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->docked() - (char *)sample);
 
                 WPS_DroneLocalizationReportMessage_g_sampleAccessInfo.memberAccessInfos = 
@@ -3965,11 +4032,11 @@ namespace rti {
                     return &RelevantLinkedFrames_type_g_tc;
                 }
 
-                RelevantLinkedFrames_type_g_tc_sequence = initialize_sequence_typecode< ::rti::core::bounded_sequence< DDS_GRI::DDSCommon::DDS_FileTimeUTC, (WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::MAX_LINKED_FRAMES) > >(((WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::MAX_LINKED_FRAMES)));
+                RelevantLinkedFrames_type_g_tc_sequence = initialize_sequence_typecode< ::rti::core::bounded_sequence< WorldPerceptionModel::WPS_TDPoint, (WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::MAX_LINKED_FRAMES) > >(((WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::MAX_LINKED_FRAMES)));
 
                 RelevantLinkedFrames_type_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                RelevantLinkedFrames_type_g_tc_sequence._data._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_FileTimeUTC_AliasTag_t>::get().native();
+                RelevantLinkedFrames_type_g_tc_sequence._data._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_TDPoint>::get().native();
                 RelevantLinkedFrames_type_g_tc._data._typeCode =  (RTICdrTypeCode *)& RelevantLinkedFrames_type_g_tc_sequence;
 
                 /* Initialize the values for member annotations. */
@@ -4376,6 +4443,9 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
+                static DDS_TypeCode WPS_UTMVehicleLocalizationParameters_g_tc_PathToFolder_string;
+                static DDS_TypeCode WPS_UTMVehicleLocalizationParameters_g_tc_LiveVideoURL_string;
+
                 static DDS_TypeCode_Member WPS_UTMVehicleLocalizationParameters_g_tc_members[2]=
                 {
 
@@ -4440,10 +4510,13 @@ namespace rti {
                     return &WPS_UTMVehicleLocalizationParameters_g_tc;
                 }
 
+                WPS_UTMVehicleLocalizationParameters_g_tc_PathToFolder_string = initialize_string_typecode((255));
+                WPS_UTMVehicleLocalizationParameters_g_tc_LiveVideoURL_string = initialize_string_typecode((255));
+
                 WPS_UTMVehicleLocalizationParameters_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_UTMVehicleLocalizationParameters_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::String200_AliasTag_t>::get().native();
-                WPS_UTMVehicleLocalizationParameters_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::String200_AliasTag_t>::get().native();
+                WPS_UTMVehicleLocalizationParameters_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&WPS_UTMVehicleLocalizationParameters_g_tc_PathToFolder_string;
+                WPS_UTMVehicleLocalizationParameters_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&WPS_UTMVehicleLocalizationParameters_g_tc_LiveVideoURL_string;
 
                 /* Initialize the values for member annotations. */
                 WPS_UTMVehicleLocalizationParameters_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_STRING;
@@ -4926,11 +4999,11 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_UTMVehicleLocalizationMessage_g_tc_members[4]=
+                static DDS_TypeCode_Member WPS_UTMVehicleLocalizationMessage_g_tc_members[2]=
                 {
 
                     {
-                        (char *)"SourceId",/* Member name */
+                        (char *)"RequestId",/* Member name */
                         {
                             0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -4948,45 +5021,9 @@ namespace rti {
                         RTICdrTypeCodeAnnotations_INITIALIZER
                     }, 
                     {
-                        (char *)"DestinationId",/* Member name */
-                        {
-                            1,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
-                        (char *)"RequestId",/* Member name */
-                        {
-                            2,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
                         (char *)"Data",/* Member name */
                         {
-                            3,/* Representation ID */
+                            1,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -5013,7 +5050,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        4, /* Number of members */
+                        2, /* Number of members */
                         WPS_UTMVehicleLocalizationMessage_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -5028,15 +5065,16 @@ namespace rti {
 
                 WPS_UTMVehicleLocalizationMessage_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_UTMVehicleLocalizationMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_UTMVehicleLocalizationMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_UTMVehicleLocalizationMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_GUID_AliasTag_t>::get().native();
-                WPS_UTMVehicleLocalizationMessage_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationData>::get().native();
+                WPS_UTMVehicleLocalizationMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+                WPS_UTMVehicleLocalizationMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationData>::get().native();
 
                 /* Initialize the values for member annotations. */
-
-                WPS_UTMVehicleLocalizationMessage_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_STRING;
-                WPS_UTMVehicleLocalizationMessage_g_tc_members[2]._annotations._defaultValue._u.string_value = (DDS_Char *) "";
+                WPS_UTMVehicleLocalizationMessage_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
+                WPS_UTMVehicleLocalizationMessage_g_tc_members[0]._annotations._defaultValue._u.long_value = 0;
+                WPS_UTMVehicleLocalizationMessage_g_tc_members[0]._annotations._minValue._d = RTI_XCDR_TK_LONG;
+                WPS_UTMVehicleLocalizationMessage_g_tc_members[0]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
+                WPS_UTMVehicleLocalizationMessage_g_tc_members[0]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
+                WPS_UTMVehicleLocalizationMessage_g_tc_members[0]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
 
                 WPS_UTMVehicleLocalizationMessage_g_tc._data._sampleAccessInfo = sample_access_info();
                 WPS_UTMVehicleLocalizationMessage_g_tc._data._typePlugin = type_plugin_info();    
@@ -5052,7 +5090,7 @@ namespace rti {
 
                 WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationMessage *sample;
 
-                static RTIXCdrMemberAccessInfo WPS_UTMVehicleLocalizationMessage_g_memberAccessInfos[4] =
+                static RTIXCdrMemberAccessInfo WPS_UTMVehicleLocalizationMessage_g_memberAccessInfos[2] =
                 {RTIXCdrMemberAccessInfo_INITIALIZER};
 
                 static RTIXCdrSampleAccessInfo WPS_UTMVehicleLocalizationMessage_g_sampleAccessInfo = 
@@ -5070,15 +5108,9 @@ namespace rti {
                 }
 
                 WPS_UTMVehicleLocalizationMessage_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->SourceId() - (char *)sample);
-
-                WPS_UTMVehicleLocalizationMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DestinationId() - (char *)sample);
-
-                WPS_UTMVehicleLocalizationMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->RequestId() - (char *)sample);
 
-                WPS_UTMVehicleLocalizationMessage_g_memberAccessInfos[3].bindingMemberValueOffset[0] = 
+                WPS_UTMVehicleLocalizationMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->Data() - (char *)sample);
 
                 WPS_UTMVehicleLocalizationMessage_g_sampleAccessInfo.memberAccessInfos = 
@@ -5322,7 +5354,7 @@ namespace rti {
                 {
 
                     {
-                        (char *)"DroneLocalizationStatus",/* Member name */
+                        (char *)"UTMVehicleLocalizationStatus",/* Member name */
                         {
                             0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -5440,7 +5472,7 @@ namespace rti {
 
                 WPS_UTMVehicleLocalizationReportData_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum>::get().native();
                 WPS_UTMVehicleLocalizationReportData_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::interpreter::initialize_bool_typecode();
-                WPS_UTMVehicleLocalizationReportData_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_GeoPoint>::get().native();
+                WPS_UTMVehicleLocalizationReportData_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_TDPoint>::get().native();
                 WPS_UTMVehicleLocalizationReportData_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation>::get().native();
                 WPS_UTMVehicleLocalizationReportData_g_tc_members[4]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::RelevantLinkedFrames_type_AliasTag_t>::get().native();
 
@@ -5483,7 +5515,7 @@ namespace rti {
                 }
 
                 WPS_UTMVehicleLocalizationReportData_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DroneLocalizationStatus() - (char *)sample);
+                (RTIXCdrUnsignedLong) ((char *)&sample->UTMVehicleLocalizationStatus() - (char *)sample);
 
                 WPS_UTMVehicleLocalizationReportData_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->docked() - (char *)sample);
@@ -5568,11 +5600,11 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_UTMVehicleLocalizationReportMessage_g_tc_members[3]=
+                static DDS_TypeCode_Member WPS_UTMVehicleLocalizationReportMessage_g_tc_members[2]=
                 {
 
                     {
-                        (char *)"SourceId",/* Member name */
+                        (char *)"RequestId",/* Member name */
                         {
                             0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -5590,27 +5622,9 @@ namespace rti {
                         RTICdrTypeCodeAnnotations_INITIALIZER
                     }, 
                     {
-                        (char *)"DestinationId",/* Member name */
-                        {
-                            1,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
                         (char *)"Data",/* Member name */
                         {
-                            2,/* Representation ID */
+                            1,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -5637,7 +5651,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        3, /* Number of members */
+                        2, /* Number of members */
                         WPS_UTMVehicleLocalizationReportMessage_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -5652,11 +5666,16 @@ namespace rti {
 
                 WPS_UTMVehicleLocalizationReportMessage_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportData>::get().native();
+                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportData>::get().native();
 
                 /* Initialize the values for member annotations. */
+                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
+                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[0]._annotations._defaultValue._u.long_value = 0;
+                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[0]._annotations._minValue._d = RTI_XCDR_TK_LONG;
+                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[0]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
+                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[0]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
+                WPS_UTMVehicleLocalizationReportMessage_g_tc_members[0]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
 
                 WPS_UTMVehicleLocalizationReportMessage_g_tc._data._sampleAccessInfo = sample_access_info();
                 WPS_UTMVehicleLocalizationReportMessage_g_tc._data._typePlugin = type_plugin_info();    
@@ -5672,7 +5691,7 @@ namespace rti {
 
                 WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportMessage *sample;
 
-                static RTIXCdrMemberAccessInfo WPS_UTMVehicleLocalizationReportMessage_g_memberAccessInfos[3] =
+                static RTIXCdrMemberAccessInfo WPS_UTMVehicleLocalizationReportMessage_g_memberAccessInfos[2] =
                 {RTIXCdrMemberAccessInfo_INITIALIZER};
 
                 static RTIXCdrSampleAccessInfo WPS_UTMVehicleLocalizationReportMessage_g_sampleAccessInfo = 
@@ -5690,12 +5709,9 @@ namespace rti {
                 }
 
                 WPS_UTMVehicleLocalizationReportMessage_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->SourceId() - (char *)sample);
+                (RTIXCdrUnsignedLong) ((char *)&sample->RequestId() - (char *)sample);
 
                 WPS_UTMVehicleLocalizationReportMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DestinationId() - (char *)sample);
-
-                WPS_UTMVehicleLocalizationReportMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->Data() - (char *)sample);
 
                 WPS_UTMVehicleLocalizationReportMessage_g_sampleAccessInfo.memberAccessInfos = 
@@ -5768,6 +5784,9 @@ namespace rti {
                 using namespace ::rti::topic::interpreter;
 
                 static RTIBool is_initialized = RTI_FALSE;
+
+                static DDS_TypeCode WPS_ModelDifferencesParameters_g_tc_PathToFolder_Old_string;
+                static DDS_TypeCode WPS_ModelDifferencesParameters_g_tc_PathToFolder_New_string;
 
                 static DDS_TypeCode_Member WPS_ModelDifferencesParameters_g_tc_members[3]=
                 {
@@ -5851,10 +5870,13 @@ namespace rti {
                     return &WPS_ModelDifferencesParameters_g_tc;
                 }
 
+                WPS_ModelDifferencesParameters_g_tc_PathToFolder_Old_string = initialize_string_typecode((255));
+                WPS_ModelDifferencesParameters_g_tc_PathToFolder_New_string = initialize_string_typecode((255));
+
                 WPS_ModelDifferencesParameters_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_ModelDifferencesParameters_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::String200_AliasTag_t>::get().native();
-                WPS_ModelDifferencesParameters_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::String200_AliasTag_t>::get().native();
+                WPS_ModelDifferencesParameters_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&WPS_ModelDifferencesParameters_g_tc_PathToFolder_Old_string;
+                WPS_ModelDifferencesParameters_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&WPS_ModelDifferencesParameters_g_tc_PathToFolder_New_string;
                 WPS_ModelDifferencesParameters_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::RegionOfInterest_type_AliasTag_t>::get().native();
 
                 /* Initialize the values for member annotations. */
@@ -6322,49 +6344,13 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_ModelDifferencesMessage_g_tc_members[4]=
+                static DDS_TypeCode_Member WPS_ModelDifferencesMessage_g_tc_members[2]=
                 {
 
                     {
-                        (char *)"SourceId",/* Member name */
-                        {
-                            0,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
-                        (char *)"DestinationId",/* Member name */
-                        {
-                            1,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
                         (char *)"RequestId",/* Member name */
                         {
-                            2,/* Representation ID */
+                            0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -6382,7 +6368,7 @@ namespace rti {
                     {
                         (char *)"Data",/* Member name */
                         {
-                            3,/* Representation ID */
+                            1,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -6409,7 +6395,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        4, /* Number of members */
+                        2, /* Number of members */
                         WPS_ModelDifferencesMessage_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -6424,15 +6410,16 @@ namespace rti {
 
                 WPS_ModelDifferencesMessage_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_ModelDifferencesMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_ModelDifferencesMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_ModelDifferencesMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_GUID_AliasTag_t>::get().native();
-                WPS_ModelDifferencesMessage_g_tc_members[3]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesData>::get().native();
+                WPS_ModelDifferencesMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+                WPS_ModelDifferencesMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesData>::get().native();
 
                 /* Initialize the values for member annotations. */
-
-                WPS_ModelDifferencesMessage_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_STRING;
-                WPS_ModelDifferencesMessage_g_tc_members[2]._annotations._defaultValue._u.string_value = (DDS_Char *) "";
+                WPS_ModelDifferencesMessage_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
+                WPS_ModelDifferencesMessage_g_tc_members[0]._annotations._defaultValue._u.long_value = 0;
+                WPS_ModelDifferencesMessage_g_tc_members[0]._annotations._minValue._d = RTI_XCDR_TK_LONG;
+                WPS_ModelDifferencesMessage_g_tc_members[0]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
+                WPS_ModelDifferencesMessage_g_tc_members[0]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
+                WPS_ModelDifferencesMessage_g_tc_members[0]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
 
                 WPS_ModelDifferencesMessage_g_tc._data._sampleAccessInfo = sample_access_info();
                 WPS_ModelDifferencesMessage_g_tc._data._typePlugin = type_plugin_info();    
@@ -6448,7 +6435,7 @@ namespace rti {
 
                 WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesMessage *sample;
 
-                static RTIXCdrMemberAccessInfo WPS_ModelDifferencesMessage_g_memberAccessInfos[4] =
+                static RTIXCdrMemberAccessInfo WPS_ModelDifferencesMessage_g_memberAccessInfos[2] =
                 {RTIXCdrMemberAccessInfo_INITIALIZER};
 
                 static RTIXCdrSampleAccessInfo WPS_ModelDifferencesMessage_g_sampleAccessInfo = 
@@ -6466,15 +6453,9 @@ namespace rti {
                 }
 
                 WPS_ModelDifferencesMessage_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->SourceId() - (char *)sample);
-
-                WPS_ModelDifferencesMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DestinationId() - (char *)sample);
-
-                WPS_ModelDifferencesMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->RequestId() - (char *)sample);
 
-                WPS_ModelDifferencesMessage_g_memberAccessInfos[3].bindingMemberValueOffset[0] = 
+                WPS_ModelDifferencesMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->Data() - (char *)sample);
 
                 WPS_ModelDifferencesMessage_g_sampleAccessInfo.memberAccessInfos = 
@@ -6752,11 +6733,11 @@ namespace rti {
 
                 static RTIBool is_initialized = RTI_FALSE;
 
-                static DDS_TypeCode_Member WPS_ModelDifferencesReportMessage_g_tc_members[3]=
+                static DDS_TypeCode_Member WPS_ModelDifferencesReportMessage_g_tc_members[2]=
                 {
 
                     {
-                        (char *)"SourceId",/* Member name */
+                        (char *)"RequestId",/* Member name */
                         {
                             0,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
@@ -6774,27 +6755,9 @@ namespace rti {
                         RTICdrTypeCodeAnnotations_INITIALIZER
                     }, 
                     {
-                        (char *)"DestinationId",/* Member name */
-                        {
-                            1,/* Representation ID */
-                            DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                            -1, /* Bitfield bits */
-                            NULL/* Member type code is assigned later */
-                        },
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        0, /* Ignored */
-                        NULL, /* Ignored */
-                        RTI_CDR_KEY_MEMBER , /* Is a key? */
-                        DDS_PUBLIC_MEMBER,/* Member visibility */
-                        1,
-                        NULL, /* Ignored */
-                        RTICdrTypeCodeAnnotations_INITIALIZER
-                    }, 
-                    {
                         (char *)"ModelDifferencesStatus",/* Member name */
                         {
-                            2,/* Representation ID */
+                            1,/* Representation ID */
                             DDS_BOOLEAN_FALSE,/* Is a pointer? */
                             -1, /* Bitfield bits */
                             NULL/* Member type code is assigned later */
@@ -6821,7 +6784,7 @@ namespace rti {
                         0, /* Ignored */
                         0, /* Ignored */
                         NULL, /* Ignored */
-                        3, /* Number of members */
+                        2, /* Number of members */
                         WPS_ModelDifferencesReportMessage_g_tc_members, /* Members */
                         DDS_VM_NONE, /* Ignored */
                         RTICdrTypeCodeAnnotations_INITIALIZER,
@@ -6836,14 +6799,19 @@ namespace rti {
 
                 WPS_ModelDifferencesReportMessage_g_tc._data._annotations._allowedDataRepresentationMask = 5;
 
-                WPS_ModelDifferencesReportMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_ModelDifferencesReportMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< DDS_GRI::DDSCommon::DDS_Identifier>::get().native();
-                WPS_ModelDifferencesReportMessage_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesStatusEnum>::get().native();
+                WPS_ModelDifferencesReportMessage_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)&DDS_g_tc_long;
+                WPS_ModelDifferencesReportMessage_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)&::rti::topic::dynamic_type< WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesStatusEnum>::get().native();
 
                 /* Initialize the values for member annotations. */
+                WPS_ModelDifferencesReportMessage_g_tc_members[0]._annotations._defaultValue._d = RTI_XCDR_TK_LONG;
+                WPS_ModelDifferencesReportMessage_g_tc_members[0]._annotations._defaultValue._u.long_value = 0;
+                WPS_ModelDifferencesReportMessage_g_tc_members[0]._annotations._minValue._d = RTI_XCDR_TK_LONG;
+                WPS_ModelDifferencesReportMessage_g_tc_members[0]._annotations._minValue._u.long_value = RTIXCdrLong_MIN;
+                WPS_ModelDifferencesReportMessage_g_tc_members[0]._annotations._maxValue._d = RTI_XCDR_TK_LONG;
+                WPS_ModelDifferencesReportMessage_g_tc_members[0]._annotations._maxValue._u.long_value = RTIXCdrLong_MAX;
 
-                WPS_ModelDifferencesReportMessage_g_tc_members[2]._annotations._defaultValue._d = RTI_XCDR_TK_ENUM;
-                WPS_ModelDifferencesReportMessage_g_tc_members[2]._annotations._defaultValue._u.enumerated_value = 0;
+                WPS_ModelDifferencesReportMessage_g_tc_members[1]._annotations._defaultValue._d = RTI_XCDR_TK_ENUM;
+                WPS_ModelDifferencesReportMessage_g_tc_members[1]._annotations._defaultValue._u.enumerated_value = 0;
 
                 WPS_ModelDifferencesReportMessage_g_tc._data._sampleAccessInfo = sample_access_info();
                 WPS_ModelDifferencesReportMessage_g_tc._data._typePlugin = type_plugin_info();    
@@ -6859,7 +6827,7 @@ namespace rti {
 
                 WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesReportMessage *sample;
 
-                static RTIXCdrMemberAccessInfo WPS_ModelDifferencesReportMessage_g_memberAccessInfos[3] =
+                static RTIXCdrMemberAccessInfo WPS_ModelDifferencesReportMessage_g_memberAccessInfos[2] =
                 {RTIXCdrMemberAccessInfo_INITIALIZER};
 
                 static RTIXCdrSampleAccessInfo WPS_ModelDifferencesReportMessage_g_sampleAccessInfo = 
@@ -6877,12 +6845,9 @@ namespace rti {
                 }
 
                 WPS_ModelDifferencesReportMessage_g_memberAccessInfos[0].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->SourceId() - (char *)sample);
+                (RTIXCdrUnsignedLong) ((char *)&sample->RequestId() - (char *)sample);
 
                 WPS_ModelDifferencesReportMessage_g_memberAccessInfos[1].bindingMemberValueOffset[0] = 
-                (RTIXCdrUnsignedLong) ((char *)&sample->DestinationId() - (char *)sample);
-
-                WPS_ModelDifferencesReportMessage_g_memberAccessInfos[2].bindingMemberValueOffset[0] = 
                 (RTIXCdrUnsignedLong) ((char *)&sample->ModelDifferencesStatus() - (char *)sample);
 
                 WPS_ModelDifferencesReportMessage_g_sampleAccessInfo.memberAccessInfos = 
@@ -6952,6 +6917,19 @@ namespace rti {
 namespace dds { 
     namespace topic {
 
+        void topic_type_support< WorldPerceptionModel::WPS_TDPoint >::reset_sample(WorldPerceptionModel::WPS_TDPoint& sample) 
+        {
+            sample.x(0.0);
+            sample.y(0.0);
+            sample.z(0.0);
+        }
+
+        void topic_type_support< WorldPerceptionModel::WPS_TDPoint >::allocate_sample(WorldPerceptionModel::WPS_TDPoint& sample, int, int) 
+        {
+            RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
+
+        }
+
         void topic_type_support< WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelParameters >::reset_sample(WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelParameters& sample) 
         {
             sample.PathToFolder("");
@@ -6962,7 +6940,7 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.PathToFolder(),  -1, 200);
+            ::rti::topic::allocate_sample(sample.PathToFolder(),  -1, 255);
             ::rti::topic::allocate_sample(sample.region_of_interest(),  -1, -1);
         }
 
@@ -7036,9 +7014,7 @@ namespace dds {
 
         void topic_type_support< WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelMessage >::reset_sample(WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelMessage& sample) 
         {
-            ::rti::topic::reset_sample(sample.SourceId());
-            ::rti::topic::reset_sample(sample.DestinationId());
-            sample.RequestId("");
+            sample.RequestId(0);
             ::rti::topic::reset_sample(sample.Data());
         }
 
@@ -7046,9 +7022,6 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.SourceId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.DestinationId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.RequestId(),  -1, (DDS_GRI::DDSCommon::GUID_LEN));
             ::rti::topic::allocate_sample(sample.Data(),  -1, -1);
         }
 
@@ -7108,8 +7081,7 @@ namespace dds {
 
         void topic_type_support< WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelReportMessage >::reset_sample(WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelReportMessage& sample) 
         {
-            ::rti::topic::reset_sample(sample.SourceId());
-            ::rti::topic::reset_sample(sample.DestinationId());
+            sample.RequestId(0);
             sample.BuildModelStatus(WorldPerceptionModel::WPS_BuildModel::WPS_BuildModelStatusEnum::Idle);
             sample.ModelQuality(0);
         }
@@ -7118,8 +7090,6 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.SourceId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.DestinationId(),  -1, -1);
             ::rti::topic::allocate_sample(sample.BuildModelStatus(),  -1, -1);
         }
 
@@ -7133,8 +7103,8 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.PathToFolder(),  -1, 200);
-            ::rti::topic::allocate_sample(sample.LiveVideoURL(),  -1, 200);
+            ::rti::topic::allocate_sample(sample.PathToFolder(),  -1, 255);
+            ::rti::topic::allocate_sample(sample.LiveVideoURL(),  -1, 255);
         }
 
         void topic_type_support< WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationData >::reset_sample(WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationData& sample) 
@@ -7207,9 +7177,7 @@ namespace dds {
 
         void topic_type_support< WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationMessage >::reset_sample(WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationMessage& sample) 
         {
-            ::rti::topic::reset_sample(sample.SourceId());
-            ::rti::topic::reset_sample(sample.DestinationId());
-            sample.RequestId("");
+            sample.RequestId(0);
             ::rti::topic::reset_sample(sample.Data());
         }
 
@@ -7217,9 +7185,6 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.SourceId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.DestinationId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.RequestId(),  -1, (DDS_GRI::DDSCommon::GUID_LEN));
             ::rti::topic::allocate_sample(sample.Data(),  -1, -1);
         }
 
@@ -7279,8 +7244,6 @@ namespace dds {
 
         void topic_type_support< WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationReportMessage >::reset_sample(WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationReportMessage& sample) 
         {
-            ::rti::topic::reset_sample(sample.SourceId());
-            ::rti::topic::reset_sample(sample.DestinationId());
             sample.DroneLocalizationStatus(WorldPerceptionModel::WPS_DroneLocalizationReporting::WPS_DroneLocalizationStatusEnum::Idle);
             sample.docked(0);
         }
@@ -7289,63 +7252,7 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.SourceId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.DestinationId(),  -1, -1);
             ::rti::topic::allocate_sample(sample.DroneLocalizationStatus(),  -1, -1);
-        }
-
-        void topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation >:: register_type(
-            ::dds::domain::DomainParticipant& participant,
-            const std::string& type_name) 
-        {
-
-            ::rti::domain::register_type_plugin(
-                participant,
-                type_name,
-                WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientationPlugin_new,
-                WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientationPlugin_delete);
-        }
-
-        std::vector<char>& topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation >::to_cdr_buffer(
-            std::vector<char>& buffer, 
-            const WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation& sample,
-            ::dds::core::policy::DataRepresentationId representation)
-        {
-            // First get the length of the buffer
-            unsigned int length = 0;
-            RTIBool ok = WPS_PositionOrientationPlugin_serialize_to_cdr_buffer(
-                NULL, 
-                &length,
-                &sample,
-                representation);
-            ::rti::core::check_return_code(
-                ok ? DDS_RETCODE_OK : DDS_RETCODE_ERROR,
-                "Failed to calculate cdr buffer size");
-
-            // Create a vector with that size and copy the cdr buffer into it
-            buffer.resize(length);
-            ok = WPS_PositionOrientationPlugin_serialize_to_cdr_buffer(
-                &buffer[0], 
-                &length, 
-                &sample,
-                representation);
-            ::rti::core::check_return_code(
-                ok ? DDS_RETCODE_OK : DDS_RETCODE_ERROR,
-                "Failed to copy cdr buffer");
-
-            return buffer;
-        }
-
-        void topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation >::from_cdr_buffer(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation& sample, 
-        const std::vector<char>& buffer)
-        {
-
-            RTIBool ok  = WPS_PositionOrientationPlugin_deserialize_from_cdr_buffer(
-                &sample, 
-                &buffer[0], 
-                static_cast<unsigned int>(buffer.size()));
-            ::rti::core::check_return_code(ok ? DDS_RETCODE_OK : DDS_RETCODE_ERROR,
-            "Failed to create WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation from cdr buffer");
         }
 
         void topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation >::reset_sample(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_PositionOrientation& sample) 
@@ -7374,8 +7281,8 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.PathToFolder(),  -1, 200);
-            ::rti::topic::allocate_sample(sample.LiveVideoURL(),  -1, 200);
+            ::rti::topic::allocate_sample(sample.PathToFolder(),  -1, 255);
+            ::rti::topic::allocate_sample(sample.LiveVideoURL(),  -1, 255);
         }
 
         void topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationData >::reset_sample(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationData& sample) 
@@ -7448,9 +7355,7 @@ namespace dds {
 
         void topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationMessage >::reset_sample(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationMessage& sample) 
         {
-            ::rti::topic::reset_sample(sample.SourceId());
-            ::rti::topic::reset_sample(sample.DestinationId());
-            sample.RequestId("");
+            sample.RequestId(0);
             ::rti::topic::reset_sample(sample.Data());
         }
 
@@ -7458,15 +7363,12 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.SourceId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.DestinationId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.RequestId(),  -1, (DDS_GRI::DDSCommon::GUID_LEN));
             ::rti::topic::allocate_sample(sample.Data(),  -1, -1);
         }
 
         void topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportData >::reset_sample(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportData& sample) 
         {
-            sample.DroneLocalizationStatus(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum::Idle);
+            sample.UTMVehicleLocalizationStatus(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationStatusEnum::Idle);
             sample.docked(0);
             ::rti::topic::reset_sample(sample.UTMCenterFrame());
             ::rti::topic::reset_sample(sample.VehiclePosOrient());
@@ -7477,7 +7379,7 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.DroneLocalizationStatus(),  -1, -1);
+            ::rti::topic::allocate_sample(sample.UTMVehicleLocalizationStatus(),  -1, -1);
             ::rti::topic::allocate_sample(sample.UTMCenterFrame(),  -1, -1);
             ::rti::topic::allocate_sample(sample.VehiclePosOrient(),  -1, -1);
             ::rti::topic::allocate_sample(sample.RelevantFrames(),  -1, -1);
@@ -7539,8 +7441,7 @@ namespace dds {
 
         void topic_type_support< WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportMessage >::reset_sample(WorldPerceptionModel::WPS_UTMVehicleLocalizationReporting::WPS_UTMVehicleLocalizationReportMessage& sample) 
         {
-            ::rti::topic::reset_sample(sample.SourceId());
-            ::rti::topic::reset_sample(sample.DestinationId());
+            sample.RequestId(0);
             ::rti::topic::reset_sample(sample.Data());
         }
 
@@ -7548,8 +7449,6 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.SourceId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.DestinationId(),  -1, -1);
             ::rti::topic::allocate_sample(sample.Data(),  -1, -1);
         }
 
@@ -7564,8 +7463,8 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.PathToFolder_Old(),  -1, 200);
-            ::rti::topic::allocate_sample(sample.PathToFolder_New(),  -1, 200);
+            ::rti::topic::allocate_sample(sample.PathToFolder_Old(),  -1, 255);
+            ::rti::topic::allocate_sample(sample.PathToFolder_New(),  -1, 255);
             ::rti::topic::allocate_sample(sample.region_of_interest(),  -1, -1);
         }
 
@@ -7639,9 +7538,7 @@ namespace dds {
 
         void topic_type_support< WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesMessage >::reset_sample(WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesMessage& sample) 
         {
-            ::rti::topic::reset_sample(sample.SourceId());
-            ::rti::topic::reset_sample(sample.DestinationId());
-            sample.RequestId("");
+            sample.RequestId(0);
             ::rti::topic::reset_sample(sample.Data());
         }
 
@@ -7649,9 +7546,6 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.SourceId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.DestinationId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.RequestId(),  -1, (DDS_GRI::DDSCommon::GUID_LEN));
             ::rti::topic::allocate_sample(sample.Data(),  -1, -1);
         }
 
@@ -7711,8 +7605,7 @@ namespace dds {
 
         void topic_type_support< WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesReportMessage >::reset_sample(WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesReportMessage& sample) 
         {
-            ::rti::topic::reset_sample(sample.SourceId());
-            ::rti::topic::reset_sample(sample.DestinationId());
+            sample.RequestId(0);
             sample.ModelDifferencesStatus(WorldPerceptionModel::WPS_ModelDifferences::WPS_ModelDifferencesStatusEnum::Idle);
         }
 
@@ -7720,8 +7613,6 @@ namespace dds {
         {
             RTIOsapiUtility_unusedParameter(sample); // [[maybe_unused]]
 
-            ::rti::topic::allocate_sample(sample.SourceId(),  -1, -1);
-            ::rti::topic::allocate_sample(sample.DestinationId(),  -1, -1);
             ::rti::topic::allocate_sample(sample.ModelDifferencesStatus(),  -1, -1);
         }
 

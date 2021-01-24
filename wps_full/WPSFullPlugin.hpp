@@ -9,8 +9,8 @@ For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
 */
 
-#ifndef WPSFullPlugin_1442534127_h
-#define WPSFullPlugin_1442534127_h
+#ifndef WPSFullPlugin_1442533129_h
+#define WPSFullPlugin_1442533129_h
 
 #include "WPSFull.hpp"
 
@@ -20,8 +20,6 @@ struct RTICdrStream;
 #include "pres/pres_typePlugin.h"
 #endif
 
-#include "DDSGeneralForWPSPlugin.hpp"
-
 #if (defined(RTI_WIN32) || defined (RTI_WINCE) || defined(RTI_INTIME)) && defined(NDDS_USER_DLL_EXPORT)
 /* If the code is building on Windows, start exporting symbols.
 */
@@ -30,6 +28,126 @@ struct RTICdrStream;
 #endif
 
 namespace WorldPerceptionModel {
+
+    #define WPS_TDPointPlugin_get_sample PRESTypePluginDefaultEndpointData_getSample
+
+    #define WPS_TDPointPlugin_get_buffer PRESTypePluginDefaultEndpointData_getBuffer 
+    #define WPS_TDPointPlugin_return_buffer PRESTypePluginDefaultEndpointData_returnBuffer
+
+    #define WPS_TDPointPlugin_create_sample PRESTypePluginDefaultEndpointData_createSample 
+    #define WPS_TDPointPlugin_destroy_sample PRESTypePluginDefaultEndpointData_deleteSample 
+
+    /* --------------------------------------------------------------------------------------
+    Support functions:
+    * -------------------------------------------------------------------------------------- */
+
+    NDDSUSERDllExport extern WPS_TDPoint*
+    WPS_TDPointPluginSupport_create_data_w_params(
+        const struct DDS_TypeAllocationParams_t * alloc_params);
+
+    NDDSUSERDllExport extern WPS_TDPoint*
+    WPS_TDPointPluginSupport_create_data_ex(RTIBool allocate_pointers);
+
+    NDDSUSERDllExport extern WPS_TDPoint*
+    WPS_TDPointPluginSupport_create_data(void);
+
+    NDDSUSERDllExport extern RTIBool 
+    WPS_TDPointPluginSupport_copy_data(
+        WPS_TDPoint *out,
+        const WPS_TDPoint *in);
+
+    NDDSUSERDllExport extern void 
+    WPS_TDPointPluginSupport_destroy_data_w_params(
+        WPS_TDPoint *sample,
+        const struct DDS_TypeDeallocationParams_t * dealloc_params);
+
+    NDDSUSERDllExport extern void 
+    WPS_TDPointPluginSupport_destroy_data_ex(
+        WPS_TDPoint *sample,RTIBool deallocate_pointers);
+
+    NDDSUSERDllExport extern void 
+    WPS_TDPointPluginSupport_destroy_data(
+        WPS_TDPoint *sample);
+
+    NDDSUSERDllExport extern void 
+    WPS_TDPointPluginSupport_print_data(
+        const WPS_TDPoint *sample,
+        const char *desc,
+        unsigned int indent);
+
+    /* ----------------------------------------------------------------------------
+    Callback functions:
+    * ---------------------------------------------------------------------------- */
+
+    NDDSUSERDllExport extern RTIBool 
+    WPS_TDPointPlugin_copy_sample(
+        PRESTypePluginEndpointData endpoint_data,
+        WPS_TDPoint *out,
+        const WPS_TDPoint *in);
+
+    /* ----------------------------------------------------------------------------
+    (De)Serialize functions:
+    * ------------------------------------------------------------------------- */
+
+    NDDSUSERDllExport extern RTIBool
+    WPS_TDPointPlugin_serialize_to_cdr_buffer(
+        char * buffer,
+        unsigned int * length,
+        const WPS_TDPoint *sample,
+        ::dds::core::policy::DataRepresentationId representation
+        = ::dds::core::policy::DataRepresentation::xcdr()); 
+
+    NDDSUSERDllExport extern RTIBool 
+    WPS_TDPointPlugin_deserialize(
+        PRESTypePluginEndpointData endpoint_data,
+        WPS_TDPoint **sample, 
+        RTIBool * drop_sample,
+        struct RTICdrStream *stream,
+        RTIBool deserialize_encapsulation,
+        RTIBool deserialize_sample, 
+        void *endpoint_plugin_qos);
+
+    NDDSUSERDllExport extern RTIBool
+    WPS_TDPointPlugin_deserialize_from_cdr_buffer(
+        WPS_TDPoint *sample,
+        const char * buffer,
+        unsigned int length);    
+
+    NDDSUSERDllExport extern unsigned int 
+    WPS_TDPointPlugin_get_serialized_sample_max_size(
+        PRESTypePluginEndpointData endpoint_data,
+        RTIBool include_encapsulation,
+        RTIEncapsulationId encapsulation_id,
+        unsigned int current_alignment);
+
+    /* --------------------------------------------------------------------------------------
+    Key Management functions:
+    * -------------------------------------------------------------------------------------- */
+    NDDSUSERDllExport extern PRESTypePluginKeyKind 
+    WPS_TDPointPlugin_get_key_kind(void);
+
+    NDDSUSERDllExport extern unsigned int 
+    WPS_TDPointPlugin_get_serialized_key_max_size(
+        PRESTypePluginEndpointData endpoint_data,
+        RTIBool include_encapsulation,
+        RTIEncapsulationId encapsulation_id,
+        unsigned int current_alignment);
+
+    NDDSUSERDllExport extern unsigned int 
+    WPS_TDPointPlugin_get_serialized_key_max_size_for_keyhash(
+        PRESTypePluginEndpointData endpoint_data,
+        RTIEncapsulationId encapsulation_id,
+        unsigned int current_alignment);
+
+    NDDSUSERDllExport extern RTIBool 
+    WPS_TDPointPlugin_deserialize_key(
+        PRESTypePluginEndpointData endpoint_data,
+        WPS_TDPoint ** sample,
+        RTIBool * drop_sample,
+        struct RTICdrStream *stream,
+        RTIBool deserialize_encapsulation,
+        RTIBool deserialize_key,
+        void *endpoint_plugin_qos);
 
     #define RegionOfInterest_typePlugin_get_sample PRESTypePluginDefaultEndpointData_getSample
 
@@ -1394,29 +1512,10 @@ namespace WorldPerceptionModel {
         WPS_DroneLocalizationStatusEnumPluginSupport_print_data(
             const WPS_DroneLocalizationStatusEnum *sample, const char *desc, int indent_level);
 
-        /* The type used to store keys for instances of type struct
-        * AnotherSimple.
-        *
-        * By default, this type is struct WPS_DroneLocalizationReportMessage
-        * itself. However, if for some reason this choice is not practical for your
-        * system (e.g. if sizeof(struct WPS_DroneLocalizationReportMessage)
-        * is very large), you may redefine this typedef in terms of another type of
-        * your choosing. HOWEVER, if you define the KeyHolder type to be something
-        * other than struct AnotherSimple, the
-        * following restriction applies: the key of struct
-        * WPS_DroneLocalizationReportMessage must consist of a
-        * single field of your redefined KeyHolder type and that field must be the
-        * first field in struct WPS_DroneLocalizationReportMessage.
-        */
-        typedef  class WPS_DroneLocalizationReportMessage WPS_DroneLocalizationReportMessageKeyHolder;
-
         #define WPS_DroneLocalizationReportMessagePlugin_get_sample PRESTypePluginDefaultEndpointData_getSample
 
         #define WPS_DroneLocalizationReportMessagePlugin_get_buffer PRESTypePluginDefaultEndpointData_getBuffer 
         #define WPS_DroneLocalizationReportMessagePlugin_return_buffer PRESTypePluginDefaultEndpointData_returnBuffer
-
-        #define WPS_DroneLocalizationReportMessagePlugin_get_key PRESTypePluginDefaultEndpointData_getKey 
-        #define WPS_DroneLocalizationReportMessagePlugin_return_key PRESTypePluginDefaultEndpointData_returnKey
 
         #define WPS_DroneLocalizationReportMessagePlugin_create_sample PRESTypePluginDefaultEndpointData_createSample 
         #define WPS_DroneLocalizationReportMessagePlugin_destroy_sample PRESTypePluginDefaultEndpointData_deleteSample 
@@ -1458,20 +1557,6 @@ namespace WorldPerceptionModel {
             const WPS_DroneLocalizationReportMessage *sample,
             const char *desc,
             unsigned int indent);
-
-        NDDSUSERDllExport extern WPS_DroneLocalizationReportMessage*
-        WPS_DroneLocalizationReportMessagePluginSupport_create_key_ex(RTIBool allocate_pointers);
-
-        NDDSUSERDllExport extern WPS_DroneLocalizationReportMessage*
-        WPS_DroneLocalizationReportMessagePluginSupport_create_key(void);
-
-        NDDSUSERDllExport extern void 
-        WPS_DroneLocalizationReportMessagePluginSupport_destroy_key_ex(
-            WPS_DroneLocalizationReportMessageKeyHolder *key,RTIBool deallocate_pointers);
-
-        NDDSUSERDllExport extern void 
-        WPS_DroneLocalizationReportMessagePluginSupport_destroy_key(
-            WPS_DroneLocalizationReportMessageKeyHolder *key);
 
         /* ----------------------------------------------------------------------------
         Callback functions:
@@ -1575,33 +1660,6 @@ namespace WorldPerceptionModel {
             RTIBool deserialize_encapsulation,
             RTIBool deserialize_key,
             void *endpoint_plugin_qos);
-
-        NDDSUSERDllExport extern RTIBool 
-        WPS_DroneLocalizationReportMessagePlugin_instance_to_key(
-            PRESTypePluginEndpointData endpoint_data,
-            WPS_DroneLocalizationReportMessageKeyHolder *key, 
-            const WPS_DroneLocalizationReportMessage *instance);
-
-        NDDSUSERDllExport extern RTIBool 
-        WPS_DroneLocalizationReportMessagePlugin_key_to_instance(
-            PRESTypePluginEndpointData endpoint_data,
-            WPS_DroneLocalizationReportMessage *instance, 
-            const WPS_DroneLocalizationReportMessageKeyHolder *key);
-
-        NDDSUSERDllExport extern RTIBool 
-        WPS_DroneLocalizationReportMessagePlugin_instance_to_keyhash(
-            PRESTypePluginEndpointData endpoint_data,
-            DDS_KeyHash_t *keyhash,
-            const WPS_DroneLocalizationReportMessage *instance,
-            RTIEncapsulationId encapsulationId);
-
-        NDDSUSERDllExport extern RTIBool 
-        WPS_DroneLocalizationReportMessagePlugin_serialized_sample_to_keyhash(
-            PRESTypePluginEndpointData endpoint_data,
-            struct RTICdrStream *stream, 
-            DDS_KeyHash_t *keyhash,
-            RTIBool deserialize_encapsulation,
-            void *endpoint_plugin_qos); 
 
         /* Plugin Functions */
         NDDSUSERDllExport extern struct PRESTypePlugin*
@@ -1749,35 +1807,6 @@ namespace WorldPerceptionModel {
         Callback functions:
         * ---------------------------------------------------------------------------- */
 
-        NDDSUSERDllExport extern PRESTypePluginParticipantData 
-        WPS_PositionOrientationPlugin_on_participant_attached(
-            void *registration_data, 
-            const struct PRESTypePluginParticipantInfo *participant_info,
-            RTIBool top_level_registration, 
-            void *container_plugin_context,
-            RTICdrTypeCode *typeCode);
-
-        NDDSUSERDllExport extern void 
-        WPS_PositionOrientationPlugin_on_participant_detached(
-            PRESTypePluginParticipantData participant_data);
-
-        NDDSUSERDllExport extern PRESTypePluginEndpointData 
-        WPS_PositionOrientationPlugin_on_endpoint_attached(
-            PRESTypePluginParticipantData participant_data,
-            const struct PRESTypePluginEndpointInfo *endpoint_info,
-            RTIBool top_level_registration, 
-            void *container_plugin_context);
-
-        NDDSUSERDllExport extern void 
-        WPS_PositionOrientationPlugin_on_endpoint_detached(
-            PRESTypePluginEndpointData endpoint_data);
-
-        NDDSUSERDllExport extern void    
-        WPS_PositionOrientationPlugin_return_sample(
-            PRESTypePluginEndpointData endpoint_data,
-            WPS_PositionOrientation *sample,
-            void *handle);    
-
         NDDSUSERDllExport extern RTIBool 
         WPS_PositionOrientationPlugin_copy_sample(
             PRESTypePluginEndpointData endpoint_data,
@@ -1847,13 +1876,6 @@ namespace WorldPerceptionModel {
             RTIBool deserialize_encapsulation,
             RTIBool deserialize_key,
             void *endpoint_plugin_qos);
-
-        /* Plugin Functions */
-        NDDSUSERDllExport extern struct PRESTypePlugin*
-        WPS_PositionOrientationPlugin_new(void);
-
-        NDDSUSERDllExport extern void
-        WPS_PositionOrientationPlugin_delete(struct PRESTypePlugin *);
 
         #define WPS_UTMVehicleLocalizationParametersPlugin_get_sample PRESTypePluginDefaultEndpointData_getSample
 
@@ -2998,29 +3020,10 @@ namespace WorldPerceptionModel {
             RTIBool deserialize_key,
             void *endpoint_plugin_qos);
 
-        /* The type used to store keys for instances of type struct
-        * AnotherSimple.
-        *
-        * By default, this type is struct WPS_ModelDifferencesMessage
-        * itself. However, if for some reason this choice is not practical for your
-        * system (e.g. if sizeof(struct WPS_ModelDifferencesMessage)
-        * is very large), you may redefine this typedef in terms of another type of
-        * your choosing. HOWEVER, if you define the KeyHolder type to be something
-        * other than struct AnotherSimple, the
-        * following restriction applies: the key of struct
-        * WPS_ModelDifferencesMessage must consist of a
-        * single field of your redefined KeyHolder type and that field must be the
-        * first field in struct WPS_ModelDifferencesMessage.
-        */
-        typedef  class WPS_ModelDifferencesMessage WPS_ModelDifferencesMessageKeyHolder;
-
         #define WPS_ModelDifferencesMessagePlugin_get_sample PRESTypePluginDefaultEndpointData_getSample
 
         #define WPS_ModelDifferencesMessagePlugin_get_buffer PRESTypePluginDefaultEndpointData_getBuffer 
         #define WPS_ModelDifferencesMessagePlugin_return_buffer PRESTypePluginDefaultEndpointData_returnBuffer
-
-        #define WPS_ModelDifferencesMessagePlugin_get_key PRESTypePluginDefaultEndpointData_getKey 
-        #define WPS_ModelDifferencesMessagePlugin_return_key PRESTypePluginDefaultEndpointData_returnKey
 
         #define WPS_ModelDifferencesMessagePlugin_create_sample PRESTypePluginDefaultEndpointData_createSample 
         #define WPS_ModelDifferencesMessagePlugin_destroy_sample PRESTypePluginDefaultEndpointData_deleteSample 
@@ -3062,20 +3065,6 @@ namespace WorldPerceptionModel {
             const WPS_ModelDifferencesMessage *sample,
             const char *desc,
             unsigned int indent);
-
-        NDDSUSERDllExport extern WPS_ModelDifferencesMessage*
-        WPS_ModelDifferencesMessagePluginSupport_create_key_ex(RTIBool allocate_pointers);
-
-        NDDSUSERDllExport extern WPS_ModelDifferencesMessage*
-        WPS_ModelDifferencesMessagePluginSupport_create_key(void);
-
-        NDDSUSERDllExport extern void 
-        WPS_ModelDifferencesMessagePluginSupport_destroy_key_ex(
-            WPS_ModelDifferencesMessageKeyHolder *key,RTIBool deallocate_pointers);
-
-        NDDSUSERDllExport extern void 
-        WPS_ModelDifferencesMessagePluginSupport_destroy_key(
-            WPS_ModelDifferencesMessageKeyHolder *key);
 
         /* ----------------------------------------------------------------------------
         Callback functions:
@@ -3179,33 +3168,6 @@ namespace WorldPerceptionModel {
             RTIBool deserialize_encapsulation,
             RTIBool deserialize_key,
             void *endpoint_plugin_qos);
-
-        NDDSUSERDllExport extern RTIBool 
-        WPS_ModelDifferencesMessagePlugin_instance_to_key(
-            PRESTypePluginEndpointData endpoint_data,
-            WPS_ModelDifferencesMessageKeyHolder *key, 
-            const WPS_ModelDifferencesMessage *instance);
-
-        NDDSUSERDllExport extern RTIBool 
-        WPS_ModelDifferencesMessagePlugin_key_to_instance(
-            PRESTypePluginEndpointData endpoint_data,
-            WPS_ModelDifferencesMessage *instance, 
-            const WPS_ModelDifferencesMessageKeyHolder *key);
-
-        NDDSUSERDllExport extern RTIBool 
-        WPS_ModelDifferencesMessagePlugin_instance_to_keyhash(
-            PRESTypePluginEndpointData endpoint_data,
-            DDS_KeyHash_t *keyhash,
-            const WPS_ModelDifferencesMessage *instance,
-            RTIEncapsulationId encapsulationId);
-
-        NDDSUSERDllExport extern RTIBool 
-        WPS_ModelDifferencesMessagePlugin_serialized_sample_to_keyhash(
-            PRESTypePluginEndpointData endpoint_data,
-            struct RTICdrStream *stream, 
-            DDS_KeyHash_t *keyhash,
-            RTIBool deserialize_encapsulation,
-            void *endpoint_plugin_qos); 
 
         /* Plugin Functions */
         NDDSUSERDllExport extern struct PRESTypePlugin*
@@ -3476,5 +3438,5 @@ namespace WorldPerceptionModel {
 #define NDDSUSERDllExport
 #endif
 
-#endif /* WPSFullPlugin_1442534127_h */
+#endif /* WPSFullPlugin_1442533129_h */
 

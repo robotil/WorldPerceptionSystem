@@ -1,15 +1,23 @@
-#include "DDSGeneralForWPS.idl"
+module WorldPerceptionModel
+{
 
-module WorldPerceptionModel{
     const long  MAX_POINTS_IN_REGION_OF_INTEREST = 10;
-    typedef sequence<DDS_GRI::DDSCommon::DDS_GeoPoint, MAX_POINTS_IN_REGION_OF_INTEREST> RegionOfInterest_type;
+
+	struct WPS_TDPoint 
+	{
+		double x;
+		double y;
+		double z;
+	}; //@top-level false
+
+    typedef sequence<WPS_TDPoint, MAX_POINTS_IN_REGION_OF_INTEREST> RegionOfInterest_type;
 
     module WPS_BuildModel
     {
  
         struct WPS_BuildModelParameters
         {
-            DDS_GRI::DDSCommon::String200 PathToFolder;
+            string<255> PathToFolder;
             RegionOfInterest_type region_of_interest;
         };//@top-level false
 
@@ -27,9 +35,7 @@ module WorldPerceptionModel{
 
 		struct WPS_BuildModelMessage
 		{
-			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
-			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
-			DDS_GRI::DDSCommon::DDS_GUID RequestId;
+			long RequestId;//@key
 			WPS_BuildModelData Data;
 		};
 
@@ -38,13 +44,13 @@ module WorldPerceptionModel{
 			Idle,  //Default and value at start
 			InProgess, 
             Aborted,
-            Completed
+            Completed,
+			Failure
 		};
 
 		struct WPS_BuildModelReportMessage
 		{
-			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
-			DDS_GRI::DDSCommon::DDS_Identifier DestinationId; //@key	
+			long RequestId;//@key
             WPS_BuildModelStatusEnum BuildModelStatus;
             long ModelQuality;
 		};
@@ -55,8 +61,8 @@ module WorldPerceptionModel{
 
 		struct WPS_DroneLocalizationParameters
         {
-            DDS_GRI::DDSCommon::String200 PathToFolder;
-			DDS_GRI::DDSCommon::String200 LiveVideoURL;
+            string<255> PathToFolder;
+			string<255> LiveVideoURL;
         };//@top-level false
 
         enum WPS_DroneLocalizationOperation_type
@@ -73,9 +79,7 @@ module WorldPerceptionModel{
 
 		struct WPS_DroneLocalizationMessage
 		{
-			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
-			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
-			DDS_GRI::DDSCommon::DDS_GUID RequestId;
+			long RequestId; //@key
 			WPS_DroneLocalizationData Data;
 		};
 
@@ -86,18 +90,17 @@ module WorldPerceptionModel{
 		};
 
 		struct WPS_DroneLocalizationReportMessage
-		{
-			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
-			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key		
+		{			
             WPS_DroneLocalizationStatusEnum DroneLocalizationStatus;
         	boolean docked;
 		};
 	}; //End Drone Localization Reporting
     
 	module WPS_UTMVehicleLocalizationReporting {
-		
+
 		const long  MAX_LINKED_FRAMES = 10;
-    	typedef sequence<DDS_GRI::DDSCommon::DDS_FileTimeUTC, MAX_LINKED_FRAMES> RelevantLinkedFrames_type;
+    	typedef sequence<WPS_TDPoint, MAX_LINKED_FRAMES> RelevantLinkedFrames_type;
+        
 
 		struct WPS_PositionOrientation
 		{
@@ -108,12 +111,12 @@ module WorldPerceptionModel{
 			double roll;
 			double yaw;
 
-		};
+		};//@top-level false
 
 		struct WPS_UTMVehicleLocalizationParameters
         {
-            DDS_GRI::DDSCommon::String200 PathToFolder;
-			DDS_GRI::DDSCommon::String200 LiveVideoURL;
+            string<255> PathToFolder;
+			string<255> LiveVideoURL;
         };//@top-level false
 
         enum WPS_UTMVehicleLocalizationOperation_type
@@ -130,10 +133,8 @@ module WorldPerceptionModel{
 		};//@top-level false
 
 		struct WPS_UTMVehicleLocalizationMessage
-		{
-			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
-			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
-			DDS_GRI::DDSCommon::DDS_GUID RequestId;
+		{	
+			long RequestId;//@key
 			WPS_UTMVehicleLocalizationData Data;
 		};
 
@@ -145,18 +146,18 @@ module WorldPerceptionModel{
 
 		struct WPS_UTMVehicleLocalizationReportData
 		{
- 			WPS_UTMVehicleLocalizationStatusEnum DroneLocalizationStatus;
+ 			WPS_UTMVehicleLocalizationStatusEnum UTMVehicleLocalizationStatus;
         	boolean docked;
-			DDS_GRI::DDSCommon::DDS_GeoPoint UTMCenterFrame;
+			WPS_TDPoint UTMCenterFrame;
             WPS_PositionOrientation VehiclePosOrient;
 			RelevantLinkedFrames_type RelevantFrames;
 
-		};//@top-level false
+		};//@top-level false			
+
 
 		struct WPS_UTMVehicleLocalizationReportMessage
 		{
-			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
-			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
+			long RequestId;//@key
 			WPS_UTMVehicleLocalizationReportData Data;         
 		};
 	}; //End UTM Vehicle Localization Reporting
@@ -166,8 +167,8 @@ module WorldPerceptionModel{
 
         struct WPS_ModelDifferencesParameters
         {
-            DDS_GRI::DDSCommon::String200 PathToFolder_Old;
-	        DDS_GRI::DDSCommon::String200 PathToFolder_New;
+            string<255> PathToFolder_Old;
+	        string<255> PathToFolder_New;
 	        RegionOfInterest_type region_of_interest;
         };//@top-level false
 
@@ -185,9 +186,7 @@ module WorldPerceptionModel{
 
 		struct WPS_ModelDifferencesMessage
 		{
-			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
-			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
-			DDS_GRI::DDSCommon::DDS_GUID RequestId;
+			long RequestId;
 			WPS_ModelDifferencesData Data;
 		};
 
@@ -201,8 +200,7 @@ module WorldPerceptionModel{
 
 		struct WPS_ModelDifferencesReportMessage
 		{
-			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
-			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key		
+			long RequestId;//@key		
             WPS_ModelDifferencesStatusEnum ModelDifferencesStatus;
 		};
         
