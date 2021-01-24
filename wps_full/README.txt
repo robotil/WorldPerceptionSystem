@@ -12,4 +12,4 @@ LIBS = -L$(NDDSHOME)/lib/$(TARGET_ARCH) \
         $(SYSLIBS) -lDDSGeneral  <<< HERE
 
 Run:
-export LD_LIBRARY_PATH=$HOME/rti_workspace/6.0.1/WPS/dds_general_src/libs
+    export LD_LIBRARY_PATH=$HOME/rti_workspace/6.0.1/WPS/dds_general_src/libs:$LD_LIBRARY_HOME
