@@ -1,0 +1,210 @@
+#include "DDSGeneralForWPS.idl"
+
+module WorldPerceptionModel{
+    const long  MAX_POINTS_IN_REGION_OF_INTEREST = 10;
+    typedef sequence<DDS_GRI::DDSCommon::DDS_GeoPoint, MAX_POINTS_IN_REGION_OF_INTEREST> RegionOfInterest_type;
+
+    module WPS_BuildModel
+    {
+ 
+        struct WPS_BuildModelParameters
+        {
+            DDS_GRI::DDSCommon::String200 PathToFolder;
+            RegionOfInterest_type region_of_interest;
+        };//@top-level false
+
+        enum WPS_BuildModelOperation_type
+		{
+			BuildModelDense,
+			AbortBuildModel
+		};
+
+        struct WPS_BuildModelData
+		{
+			WPS_BuildModelOperation_type request;
+			WPS_BuildModelParameters parameters;
+		};//@top-level false
+
+		struct WPS_BuildModelMessage
+		{
+			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
+			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_GRI::DDSCommon::DDS_GUID RequestId;
+			WPS_BuildModelData Data;
+		};
+
+		enum WPS_BuildModelStatusEnum
+		{
+			Idle,  //Default and value at start
+			InProgess, 
+            Aborted,
+            Completed
+		};
+
+		struct WPS_BuildModelReportMessage
+		{
+			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
+			DDS_GRI::DDSCommon::DDS_Identifier DestinationId; //@key	
+            WPS_BuildModelStatusEnum BuildModelStatus;
+            long ModelQuality;
+		};
+        
+    }; //End BuildModel
+
+	module WPS_DroneLocalizationReporting {
+
+		struct WPS_DroneLocalizationParameters
+        {
+            DDS_GRI::DDSCommon::String200 PathToFolder;
+			DDS_GRI::DDSCommon::String200 LiveVideoURL;
+        };//@top-level false
+
+        enum WPS_DroneLocalizationOperation_type
+		{
+			ReportDroneLocalization,
+			AbortDroneLocalization
+		};
+
+        struct WPS_DroneLocalizationData
+		{
+			WPS_DroneLocalizationOperation_type request;
+			WPS_DroneLocalizationParameters parameters;
+		};//@top-level false
+
+		struct WPS_DroneLocalizationMessage
+		{
+			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
+			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_GRI::DDSCommon::DDS_GUID RequestId;
+			WPS_DroneLocalizationData Data;
+		};
+
+		enum WPS_DroneLocalizationStatusEnum
+		{
+			Idle,  //Default and value at start
+			Reporting
+		};
+
+		struct WPS_DroneLocalizationReportMessage
+		{
+			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
+			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key		
+            WPS_DroneLocalizationStatusEnum DroneLocalizationStatus;
+        	boolean docked;
+		};
+	}; //End Drone Localization Reporting
+    
+	module WPS_UTMVehicleLocalizationReporting {
+		
+		const long  MAX_LINKED_FRAMES = 10;
+    	typedef sequence<DDS_GRI::DDSCommon::DDS_FileTimeUTC, MAX_LINKED_FRAMES> RelevantLinkedFrames_type;
+
+		struct WPS_PositionOrientation
+		{
+			double x;
+			double y;
+			double z;
+			double pitch;
+			double roll;
+			double yaw;
+
+		};
+
+		struct WPS_UTMVehicleLocalizationParameters
+        {
+            DDS_GRI::DDSCommon::String200 PathToFolder;
+			DDS_GRI::DDSCommon::String200 LiveVideoURL;
+        };//@top-level false
+
+        enum WPS_UTMVehicleLocalizationOperation_type
+		{
+			ReportUTMCenterFrameLocalization,
+			ReportVehicleOrientation,
+			AbortAllReporting
+		};
+
+        struct WPS_UTMVehicleLocalizationData
+		{
+			WPS_UTMVehicleLocalizationOperation_type request;
+			WPS_UTMVehicleLocalizationParameters parameters;
+		};//@top-level false
+
+		struct WPS_UTMVehicleLocalizationMessage
+		{
+			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
+			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_GRI::DDSCommon::DDS_GUID RequestId;
+			WPS_UTMVehicleLocalizationData Data;
+		};
+
+		enum WPS_UTMVehicleLocalizationStatusEnum
+		{
+			Idle,  //Default and value at start
+			Reporting
+		};
+
+		struct WPS_UTMVehicleLocalizationReportData
+		{
+ 			WPS_UTMVehicleLocalizationStatusEnum DroneLocalizationStatus;
+        	boolean docked;
+			DDS_GRI::DDSCommon::DDS_GeoPoint UTMCenterFrame;
+            WPS_PositionOrientation VehiclePosOrient;
+			RelevantLinkedFrames_type RelevantFrames;
+
+		};//@top-level false
+
+		struct WPS_UTMVehicleLocalizationReportMessage
+		{
+			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
+			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
+			WPS_UTMVehicleLocalizationReportData Data;         
+		};
+	}; //End UTM Vehicle Localization Reporting
+
+	module WPS_ModelDifferences
+    {
+
+        struct WPS_ModelDifferencesParameters
+        {
+            DDS_GRI::DDSCommon::String200 PathToFolder_Old;
+	        DDS_GRI::DDSCommon::String200 PathToFolder_New;
+	        RegionOfInterest_type region_of_interest;
+        };//@top-level false
+
+        enum WPS_ModelDifferencesOperation_type
+		{
+			CheckModelDifferences,
+			AbortCheckModel
+		};
+
+        struct WPS_ModelDifferencesData
+		{
+			WPS_ModelDifferencesOperation_type request;
+			WPS_ModelDifferencesParameters parameters;
+		};//@top-level false
+
+		struct WPS_ModelDifferencesMessage
+		{
+			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
+			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_GRI::DDSCommon::DDS_GUID RequestId;
+			WPS_ModelDifferencesData Data;
+		};
+
+		enum WPS_ModelDifferencesStatusEnum
+		{
+			Idle,  //Default and value at start
+			InProgess, 
+            Aborted,
+            Completed
+		};
+
+		struct WPS_ModelDifferencesReportMessage
+		{
+			DDS_GRI::DDSCommon::DDS_Identifier SourceId;//@key
+			DDS_GRI::DDSCommon::DDS_Identifier DestinationId;//@key		
+            WPS_ModelDifferencesStatusEnum ModelDifferencesStatus;
+		};
+        
+    }; //End BuildModel
+};

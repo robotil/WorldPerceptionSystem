@@ -1,0 +1,444 @@
+module DDS_GRI
+{
+	module DDSCommon
+	{
+		typedef string<200> String200;
+		typedef string<100> String100;
+		typedef string<50>  String50;
+		typedef string<20>  String20;
+
+		typedef wstring<200> WString200;
+		typedef wstring<100> WString100;
+		typedef wstring<50>  WString50;
+		typedef wstring<20>  WString20;
+
+		const long  GUID_LEN = 24;
+		typedef string<GUID_LEN> DDS_GUID;
+		typedef long long DDS_FileTimeUTC;
+
+		// A 32 Bit signed Integer
+		typedef long T_Int32;
+
+		// A 64 Bit signed Integer
+		typedef long long T_Int64;
+		
+		// This defines the time that has elapsed since the 1970-01-01 00:00:00 UTC Epoch. It consists of two attributes:
+		// 
+		// the number of seconds from the 1970-01-01 00:00:00 UTC Epoch
+		// plus the number of completed nanoseconds from the start of the interval identified in the seconds attribute.
+		struct T_DateTimeType
+		{
+			T_Int64 A_second;
+			T_Int32 A_nanoseconds;
+		}; //@top-level false
+
+		enum DDS_ValueTypeEnum
+		{
+			None,
+			Bool,
+			Byte,
+			Char,
+			Decimal,
+			Double,
+			Float,
+			Int,
+			Long,
+			Sbyte,
+			Short,
+			Uint,
+			Ulong,
+			Ushort,
+			String
+			
+		};
+	
+		struct DDS_AttributeValue
+		{
+			String20 Name;
+			String20 Value;
+			DDS_ValueTypeEnum ValueType;
+			boolean IsChanged;
+		};//@top-level false
+		
+		struct DDS_Identifier
+		{
+			unsigned short Id;
+			String50 Type;
+		};//@top-level false
+
+		struct DDS_GuidIdentifierPair
+		{
+			DDS_GUID Guid;
+			DDS_Identifier Id;
+		};
+
+		struct DDS_LogicPoint
+		{
+			double X;
+			double Y;
+		};//@top-level false
+
+		struct DDS_GeoPoint
+		{
+			double Longitude;
+			double Latitude;
+			double Altitude;
+			unsigned short GeoPointId ;
+		};//@top-level false
+
+		struct DDS_GeoCircle
+		{
+			double Radius;
+			DDS_GeoPoint Center;
+			
+		};//@top-level false
+
+		struct DDS_WayPoint
+		{
+			double Longitude;
+			double Latitude;
+			double Altitude;
+
+			unsigned short WaypointId;
+			octet WaypointCriticalLevel;
+		};//@top-level false
+
+		struct DDS_String50DoublePair
+		{
+			String50 Key;
+			double Value;
+		};//@top-level false
+
+		struct DDS_RangeDescription
+		{
+			double Minimum;
+			double Maximum;
+		};//@top-level false
+
+		struct DDS_ItemType
+		{
+			unsigned short Type;
+			octet Subtype;
+		};//@top-level false
+
+		enum DDS_Visibility
+		{
+			Visible = 0,
+			Hidden = 1,
+			Collapsed = 2
+		};
+
+		enum DDS_OperationType
+		{
+			OnOffOperation,
+			EnumsOperation,
+			NumericOperation,
+			UpDownEnumsOperation
+		};
+
+		enum DDS_OprationStatus
+		{
+			None,
+			NotExecuted,
+			InProcess,
+			FinishedSuccessfully,
+			Failure,
+			Timeout,
+			Stoped
+		};
+		
+		struct DDS_BaseRequestMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+		};
+		
+	}; //end common
+
+	module DDSInfrastarcture
+	{
+		struct DDS_SectionWaypoint : DDSCommon::DDS_WayPoint
+		{
+			long PervWaypintId;
+			long WaypointIndex;
+		};//@top-level false
+
+		struct DDS_WaypointBehaviorType
+		{
+			long BehaviorType;
+			double Value;
+		};//@top-level false
+
+
+		const long  MAX_LEN_OF_WAYPOINT_BEHAIVIORS = 10;
+		struct DDS_WaypointBehaviors
+		{
+			unsigned short WaypointId;
+			sequence<DDS_WaypointBehaviorType, MAX_LEN_OF_WAYPOINT_BEHAIVIORS> Behaviors;
+		};//@top-level false
+
+		struct DDS_ItemDescrpition
+		{
+			DDSCommon::DDS_GUID RefClientSideId;
+			DDSCommon::WString100 Name;
+			DDSCommon::String100 Createion;
+			DDSCommon::DDS_FileTimeUTC ModificationTime;
+			DDSCommon::String100 Creator;
+			DDSCommon::WString200 Description;
+			DDSCommon::DDS_ItemType MissionElementType;
+			boolean IsReservedItem;
+			boolean IsSave;
+			unsigned short ItemId;
+			DDSCommon::String20 VehicleType;
+		};//@top-level false
+
+		struct DDS_BaseItem
+		{
+			DDSCommon::DDS_GUID ClientSideId;//@key
+			unsigned short ItemId;
+			DDSCommon::DDS_GUID ModificationId;
+			DDSCommon::DDS_ItemType ItemType;
+			octet Action;//None,Save,Update,Delete ...
+			DDS_ItemDescrpition ItemDescrpition;
+			unsigned short Assignment;
+
+		};
+
+		struct DDS_Way : DDS_BaseItem
+		{
+			octet Stam;
+		};//@top-level false
+
+		struct DDS_ClientServerWayMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_Way Item;//@key
+		};
+
+		//Section: Has Unbounded Array
+		struct DDS_Section : DDS_BaseItem
+		{
+			DDSCommon::DDS_GUID WayId;
+			sequence<DDS_SectionWaypoint> Waypoints;
+			double Speed;
+			octet Direction;
+			double Width;
+			sequence<DDS_WaypointBehaviors> WaypointsBehavior;
+		};//@top-level false
+
+		//SectionMessage: Has Unbounded Array
+		struct DDS_ClientServerSectionMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_Section Item; //@key
+		};
+
+		struct DDS_BaseRouteProperty
+		{
+			unsigned short PathWidth;
+			unsigned short MotionRadius;
+			unsigned short RequiredRadiusOfCurvature;
+			octet WaypointType;
+		};//@top-level false
+
+		struct DDS_Route : DDS_BaseItem
+		{
+			DDS_BaseRouteProperty BaseRouteProperties;
+			sequence<DDSCommon::DDS_GUID> Sections;
+			sequence<DDS_SectionWaypoint> Waypoints;
+			sequence<DDS_WaypointBehaviors> WaypointsBehavior;
+		};
+
+		//Route message: Has Unbounded Array
+		struct DDS_ClientServerRouteMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_Route Item;//@key
+		};
+
+		struct DDS_ClientServerRequestItemsDiscrptionByTypeMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_ItemType ItemType;//@key
+		};
+
+		//ItemDescrpitions message: Has Unbounded Array
+		struct DDS_ClientServerResponseItemsDiscrptionMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDSCommon::DDS_ItemType ItemType;//@key
+			sequence<DDS_ItemDescrpition> ItemDescrpitions;
+		};
+		
+	};
+
+	module DDSExternalSystem
+	{	
+		const long  EXTENDED_GEO_POINT_BEHEVIOR_ARRAY_MAX_LEN = 10;
+		struct ExtendedGeoPoint
+		{
+			DDSCommon::DDS_GeoPoint Point;
+			sequence<
+				DDSInfrastarcture::DDS_WaypointBehaviorType, EXTENDED_GEO_POINT_BEHEVIOR_ARRAY_MAX_LEN>  Behaviors;
+		};//@top-level false
+				
+		const long  EXTENDED_GEO_POINT_ARRAY_MAX_LEN = 200;
+		struct ExtendedGeoPointArray
+		{
+			sequence<ExtendedGeoPoint, EXTENDED_GEO_POINT_ARRAY_MAX_LEN> Points;
+		};//@top-level false
+		
+		
+		
+		const long  EXTERNAL_MISSION_DATA_POLYLINE_MAX_LEN = 5;
+		const long  EXTERNAL_MISSION_DATA_POLYGONE_MAX_LEN = 5;
+		const long  EXTERNAL_MISSION_DATA_POINTS_MAX_LEN = 10;
+		
+		struct DDS_ExternalMissionData
+		{
+			DDSCommon::DDS_Identifier VehicleId;//@key
+			octet MissionType;
+			sequence<ExtendedGeoPointArray, EXTERNAL_MISSION_DATA_POLYLINE_MAX_LEN>  Polyline;
+			sequence<ExtendedGeoPointArray, EXTERNAL_MISSION_DATA_POLYGONE_MAX_LEN>  Polygone;
+			sequence<ExtendedGeoPoint, EXTERNAL_MISSION_DATA_POINTS_MAX_LEN> Points;
+			
+		};//@top-level false
+		
+		struct DDS_ExternalMissionMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDSCommon::DDS_GUID RequestId;
+			DDS_ExternalMissionData MissionData;
+		};
+
+		struct DDS_ExternalMissionResponseData
+		{
+			DDSCommon::DDS_GUID RequestId;//@key
+			boolean IsSucceed;
+			DDSCommon::DDS_GUID MissionId;
+		};//@top-level false
+		
+		struct DDS_ExternalMissionResponseMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_ExternalMissionResponseData Data;
+		};
+		
+		struct DDS_ActivateMissionCommandData
+		{
+			DDSCommon::DDS_GUID MissionId;
+		};//@top-level false
+		
+		struct DDS_ActivateMissionCommandMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_ActivateMissionCommandData Data;
+		};
+		
+		const long  ADD_REGION_DATA_POLIGON_MAX_LEN = 100;
+		struct DDS_AddRegionData
+		{
+			DDSCommon::DDS_GUID MissionId;
+			octet PolygonType;
+			sequence<DDSCommon::DDS_GeoPoint, ADD_REGION_DATA_POLIGON_MAX_LEN> Polygon;
+		};//@top-level false
+		
+		struct DDS_AddRegionDataMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDSCommon::DDS_GUID RequestId;//@key
+			DDS_AddRegionData Data;
+		};
+		
+		struct DDS_RegionResponseData
+		{
+			DDSCommon::DDS_GUID RequestId;//@key
+			DDSCommon::DDS_GUID MissionId;
+			DDSCommon::DDS_GUID RegionId;
+			octet Action;
+			boolean IsSucceed;
+		};//@top-level false
+
+		struct DDS_RegionResponseMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDS_RegionResponseData Data;
+		};
+
+		const long  REMOVE_REGION_DATA_ARRAY_MAX_LEN = 100;
+		struct DDS_RemoveRegionData
+		{
+			DDSCommon::DDS_GUID MissionId;
+			sequence<DDSCommon::DDS_GUID, REMOVE_REGION_DATA_ARRAY_MAX_LEN> RegionsToRemove;
+		};
+		
+		struct DDS_RemoveRegionMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDSCommon::DDS_GUID RequestId;//@key
+			DDS_RemoveRegionData Data;
+		};
+				
+	}; //end DDSGBB
+
+	module DDSCamera
+	{
+		struct DDS_CameraCapabilitiesMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDSCommon::DDS_Identifier CameraID;//@key
+			sequence<DDSCommon::DDS_String50DoublePair, 10> Parameters;
+		};
+	};	//end DDSCamera
+	module DDSGpp
+	{
+		struct DDS_GlobalPathQueryData
+		{
+			DDSCommon::DDS_LogicPoint PointFrom;
+			DDSCommon::DDS_LogicPoint PointTo;
+			long MaxNumOfPath;
+			double MaxDistanceToPathInMeters;
+		};//@top-level false
+
+		struct DDS_GlobalPathQueryMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDSCommon::DDS_GUID RequestId;
+			DDS_GlobalPathQueryData Data;
+		};
+
+		const long  MAX_POINTS_IN_GLOBAL_PATH = 500;
+		const long  MAX_NUM_OF_PATH = 4;
+		struct DDS_GlobalPath
+		{
+			long PathId;
+			sequence<DDSCommon::DDS_LogicPoint, MAX_POINTS_IN_GLOBAL_PATH> Path;
+		};//@top-level false
+
+		struct DDS_GlobalPathReportData
+		{
+			DDSCommon::DDS_GUID RequestId;
+			sequence<DDS_GlobalPath, MAX_NUM_OF_PATH> GlobalPathList;
+		};//@top-level false
+
+		struct DDS_GlobalPathReportMessage
+		{
+			DDSCommon::DDS_Identifier SourceId;//@key
+			DDSCommon::DDS_Identifier DestinationId;//@key
+			DDSCommon::DDS_GUID RequestId;
+			DDS_GlobalPathReportData Data;
+		};
+	};	//end DDSGpp
+};
